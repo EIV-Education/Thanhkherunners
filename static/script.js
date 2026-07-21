@@ -7,7 +7,7 @@ const resultsSection = document.getElementById("results-section");
 const resultsBody = document.getElementById("results-body");
 const exportBtn = document.getElementById("export-btn");
 const exportStatus = document.getElementById("export-status");
-const sheetIdInput = document.getElementById("sheet-id");
+const scriptUrlInput = document.getElementById("script-url");
 const sheetTabInput = document.getElementById("sheet-tab");
 
 let pendingFiles = [];
@@ -161,9 +161,9 @@ exportBtn.addEventListener("click", async () => {
     return;
   }
 
-  const sheetId = sheetIdInput.value.trim();
-  if (!sheetId) {
-    exportStatus.textContent = "Vui lòng nhập Google Sheet ID.";
+  const scriptUrl = scriptUrlInput.value.trim();
+  if (!scriptUrl) {
+    exportStatus.textContent = "Vui lòng nhập link Google Apps Script Web App.";
     exportStatus.className = "status error";
     return;
   }
@@ -178,7 +178,7 @@ exportBtn.addEventListener("click", async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         rows,
-        sheet_id: sheetId,
+        script_url: scriptUrl,
         sheet_tab: sheetTabInput.value.trim(),
       }),
     });

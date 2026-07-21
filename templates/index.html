@@ -56,17 +56,18 @@
       </div>
 
       <div class="export-row">
-        <label>
-          Google Sheet ID
-          <input type="text" id="sheet-id" placeholder="1AbC...xyz" value="{{ default_sheet_id }}" />
+        <label class="export-row-wide">
+          Link Google Apps Script Web App
+          <input type="text" id="script-url" placeholder="https://script.google.com/macros/s/xxxxx/exec" value="{{ default_script_url }}" />
         </label>
         <label>
-          Tên tab
+          Tên tab (để trống = tab đang mở)
           <input type="text" id="sheet-tab" placeholder="Sheet1" value="{{ default_sheet_tab }}" />
         </label>
         <button id="export-btn" class="btn primary">Xuất ra Google Sheet</button>
         <span id="export-status" class="status"></span>
       </div>
+      <p class="hint">Chưa có link? Xem hướng dẫn tạo Google Apps Script Web App trong file README.md (thư mục <code>google-apps-script/</code>).</p>
     </section>
   </main>
 

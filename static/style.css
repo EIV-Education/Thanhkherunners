@@ -232,3 +232,12 @@ td input:focus {
   font-size: 0.9rem;
   min-width: 220px;
 }
+
+.export-row-wide {
+  flex: 1 1 320px;
+}
+
+.export-row-wide input {
+  width: 100%;
+  min-width: 260px;
+}

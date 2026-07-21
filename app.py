@@ -2,12 +2,11 @@ import json
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from google import genai
 from google.genai import types
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
 from pydantic import BaseModel
 
 load_dotenv()
@@ -15,16 +14,12 @@ load_dotenv()
 app = Flask(__name__)
 
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
-GOOGLE_CREDENTIALS_FILE = os.environ.get(
-    "GOOGLE_CREDENTIALS_FILE", "credentials/service_account.json"
-)
-GOOGLE_SHEET_ID = os.environ.get("GOOGLE_SHEET_ID", "")
-GOOGLE_SHEET_TAB = os.environ.get("GOOGLE_SHEET_TAB", "Sheet1")
+GOOGLE_SCRIPT_URL = os.environ.get("GOOGLE_SCRIPT_URL", "")
+GOOGLE_SCRIPT_SECRET = os.environ.get("GOOGLE_SCRIPT_SECRET", "")
+GOOGLE_SHEET_TAB = os.environ.get("GOOGLE_SHEET_TAB", "")
 
 MAX_IMAGE_BYTES = 20 * 1024 * 1024  # 20MB/ảnh
 ALLOWED_MIME_TYPES = {"image/png", "image/jpeg", "image/webp", "image/gif"}
-
-HEADER_ROW = ["Họ tên", "Cự ly", "Thành tích", "Giải chạy"]
 
 _gemini_client = None
 
@@ -85,7 +80,7 @@ def extract_from_image(filename: str, image_bytes: bytes, media_type: str) -> di
 def index():
     return render_template(
         "index.html",
-        default_sheet_id=GOOGLE_SHEET_ID,
+        default_script_url=GOOGLE_SCRIPT_URL,
         default_sheet_tab=GOOGLE_SHEET_TAB,
     )
 
@@ -137,83 +132,57 @@ def api_extract():
     return jsonify({"results": results, "errors": errors})
 
 
-def _load_google_credentials():
-    """Ưu tiên đọc từ biến môi trường GOOGLE_CREDENTIALS_JSON (dán nguyên nội dung file
-    service_account.json vào - dùng cho Vercel/serverless, nơi không ghi được file lên đĩa).
-    Nếu không có, fallback đọc từ file cục bộ GOOGLE_CREDENTIALS_FILE (dùng khi chạy local)."""
-    raw_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
-    if raw_json:
-        info = json.loads(raw_json)
-        return service_account.Credentials.from_service_account_info(
-            info, scopes=["https://www.googleapis.com/auth/spreadsheets"]
-        )
-    if os.path.exists(GOOGLE_CREDENTIALS_FILE):
-        return service_account.Credentials.from_service_account_file(
-            GOOGLE_CREDENTIALS_FILE,
-            scopes=["https://www.googleapis.com/auth/spreadsheets"],
-        )
-    raise RuntimeError(
-        "Không tìm thấy Google credentials. Đặt biến môi trường GOOGLE_CREDENTIALS_JSON "
-        "(dán nguyên nội dung file service_account.json) hoặc file "
-        f"'{GOOGLE_CREDENTIALS_FILE}'. Xem README.md để thiết lập."
-    )
-
-
-def _sheet_has_header(service, sheet_id: str, sheet_tab: str) -> bool:
-    result = (
-        service.spreadsheets()
-        .values()
-        .get(spreadsheetId=sheet_id, range=f"{sheet_tab}!A1:D1")
-        .execute()
-    )
-    return bool(result.get("values"))
-
-
 @app.route("/api/export", methods=["POST"])
 def api_export():
     payload = request.get_json(force=True) or {}
     rows = payload.get("rows", [])
-    sheet_id = (payload.get("sheet_id") or GOOGLE_SHEET_ID).strip()
-    sheet_tab = (payload.get("sheet_tab") or GOOGLE_SHEET_TAB).strip() or "Sheet1"
+    script_url = (payload.get("script_url") or GOOGLE_SCRIPT_URL).strip()
+    sheet_tab = (payload.get("sheet_tab") or GOOGLE_SHEET_TAB).strip()
 
-    if not sheet_id:
-        return jsonify({"error": "Thiếu Google Sheet ID."}), 400
+    if not script_url:
+        return jsonify({"error": "Thiếu link Google Apps Script Web App."}), 400
     if not rows:
         return jsonify({"error": "Không có dữ liệu để xuất."}), 400
 
+    clean_rows = [
+        {
+            "full_name": row.get("full_name", ""),
+            "distance": row.get("distance", ""),
+            "finish_time": row.get("finish_time", ""),
+            "race_name": row.get("race_name", ""),
+        }
+        for row in rows
+    ]
+
+    body = {"rows": clean_rows}
+    if sheet_tab:
+        body["sheet_tab"] = sheet_tab
+    if GOOGLE_SCRIPT_SECRET:
+        body["secret"] = GOOGLE_SCRIPT_SECRET
+
     try:
-        creds = _load_google_credentials()
-        service = build("sheets", "v4", credentials=creds)
+        resp = requests.post(script_url, json=body, timeout=30)
+        resp.raise_for_status()
+        result = resp.json()
+    except requests.exceptions.RequestException as exc:
+        return jsonify({"error": f"Không gọi được Google Apps Script: {exc}"}), 500
+    except ValueError:
+        return (
+            jsonify(
+                {
+                    "error": (
+                        "Google Apps Script trả về dữ liệu không hợp lệ (không phải JSON). "
+                        "Kiểm tra lại đã Deploy đúng loại 'Web app' và link còn hoạt động chưa."
+                    )
+                }
+            ),
+            500,
+        )
 
-        if not _sheet_has_header(service, sheet_id, sheet_tab):
-            service.spreadsheets().values().update(
-                spreadsheetId=sheet_id,
-                range=f"{sheet_tab}!A1:D1",
-                valueInputOption="USER_ENTERED",
-                body={"values": [HEADER_ROW]},
-            ).execute()
+    if isinstance(result, dict) and result.get("error"):
+        return jsonify({"error": result["error"]}), 500
 
-        values = [
-            [
-                row.get("full_name", ""),
-                row.get("distance", ""),
-                row.get("finish_time", ""),
-                row.get("race_name", ""),
-            ]
-            for row in rows
-        ]
-
-        service.spreadsheets().values().append(
-            spreadsheetId=sheet_id,
-            range=f"{sheet_tab}!A:D",
-            valueInputOption="USER_ENTERED",
-            insertDataOption="INSERT_ROWS",
-            body={"values": values},
-        ).execute()
-    except Exception as exc:  # noqa: BLE001 - surface Google API errors to the UI
-        return jsonify({"error": f"Lỗi khi ghi vào Google Sheet: {exc}"}), 500
-
-    return jsonify({"status": "ok", "rows_written": len(values)})
+    return jsonify({"status": "ok", "rows_written": len(clean_rows)})
 
 
 if __name__ == "__main__":
