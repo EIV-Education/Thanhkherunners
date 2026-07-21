@@ -129,12 +129,15 @@ function doGet(e) {
 }
 
 // Cột "Thời gian hoàn thành" (chip time) đôi khi bị Google Sheets tự nhận diện là 1 giá trị
-// Time và lưu thành object Date (ngày epoch 1899-12-30) thay vì giữ nguyên chuỗi "HH:MM:SS".
-// Khi đó JSON.stringify sẽ trả ra chuỗi kiểu "1899-12-29T20:51:00.000Z" rất khó hiểu - hàm này
-// phát hiện trường hợp đó và định dạng lại thành "HH:mm:ss" theo đúng chip time.
+// Time và lưu thành object Date (ngày epoch giả 1899-12-30) thay vì giữ nguyên chuỗi "HH:MM:SS".
+// Ngày epoch giả này rơi vào trước năm 1906 nên timezone Việt Nam (Asia/Ho_Chi_Minh) áp dụng quy
+// tắc lịch sử "Local Mean Time" (lệch +07:06:xx thay vì +07:00 chẵn) - nếu format theo timezone
+// đó sẽ ra giờ SAI lệch vài phút so với chip time gốc. Giá trị Date mà Apps Script tạo ra từ ô
+// Time luôn được tính theo UTC (không phụ thuộc timezone của Sheet/script), nên phải đọc theo
+// UTC (Etc/GMT, không áp quy tắc lịch sử/DST nào) mới ra đúng đúng "HH:mm:ss" đã nhập ban đầu.
 function formatFinishTime(value) {
   if (Object.prototype.toString.call(value) === "[object Date]") {
-    return Utilities.formatDate(value, Session.getScriptTimeZone(), "HH:mm:ss");
+    return Utilities.formatDate(value, "Etc/GMT", "HH:mm:ss");
   }
   return value || "";
 }
