@@ -57,15 +57,9 @@
       </div>
 
       <div class="export-row">
-        <label class="export-row-wide">
-          Link Google Apps Script Web App
-          <input type="text" id="script-url" placeholder="https://script.google.com/macros/s/xxxxx/exec" value="{{ default_script_url }}" />
-        </label>
-        <label>
-          Tên tab (để trống = tab đang mở)
-          <input type="text" id="sheet-tab" placeholder="Sheet1" value="{{ default_sheet_tab }}" />
-        </label>
-        <button id="export-btn" class="btn primary">Xuất ra Google Sheet</button>
+        <input type="hidden" id="script-url" value="{{ default_script_url }}" />
+        <input type="hidden" id="sheet-tab" value="{{ default_sheet_tab }}" />
+        <button id="export-btn" class="btn primary">Xác Nhận Lưu</button>
         <span id="export-status" class="status"></span>
       </div>
     </section>
