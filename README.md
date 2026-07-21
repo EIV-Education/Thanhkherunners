@@ -23,24 +23,65 @@ cp .env.example .env
 
 ## 3. Thiết lập Google Sheets API (Service Account)
 
-1. Vào [Google Cloud Console](https://console.cloud.google.com/) → tạo một Project mới (hoặc dùng project có sẵn).
-2. Vào **APIs & Services → Library**, tìm **Google Sheets API** → bấm **Enable**.
-3. Vào **APIs & Services → Credentials → Create Credentials → Service Account**.
-   - Đặt tên bất kỳ, ví dụ `finisher-cert-bot`.
-   - Bỏ qua phần gán role (không bắt buộc).
-4. Sau khi tạo xong, mở Service Account vừa tạo → tab **Keys → Add Key → Create new key → JSON**.
-   - File JSON sẽ tự động tải về máy.
-5. Đổi tên file đó thành `service_account.json` và đặt vào thư mục `credentials/` trong project này
-   (đường dẫn: `credentials/service_account.json`).
-6. Mở file JSON, copy giá trị `client_email` (dạng `xxx@xxx.iam.gserviceaccount.com`).
-7. Mở Google Sheet bạn muốn ghi dữ liệu vào → bấm **Share** → dán email ở bước 6 vào,
-   chọn quyền **Editor** → **Send/Share**.
-8. Lấy Sheet ID từ URL của Google Sheet:
-   `https://docs.google.com/spreadsheets/d/`**`<SHEET_ID>`**`/edit`
-9. Mở `.env`, điền `GOOGLE_SHEET_ID=<SHEET_ID>` (có thể để trống và nhập trực tiếp trên giao diện web).
+File `service_account.json` **không có sẵn trong repo** (và không nên có — nó chứa khóa bí mật).
+Bạn phải tự tạo nó trên Google Cloud Console theo các bước dưới đây.
 
-> Lưu ý: file `credentials/service_account.json` và `.env` chứa thông tin nhạy cảm,
-> đã được đưa vào `.gitignore` — không commit lên GitHub.
+### 3.1. Tạo project trên Google Cloud (nếu chưa có)
+
+1. Vào https://console.cloud.google.com/ và đăng nhập bằng tài khoản Google.
+2. Ở góc trên bên trái (cạnh chữ "Google Cloud"), bấm vào ô chọn project (mặc định ghi
+   **"Select a project"**).
+3. Trong cửa sổ hiện ra, bấm **"NEW PROJECT"** (góc trên bên phải).
+4. Đặt tên bất kỳ, ví dụ `thanh-khe-runners` → bấm **"CREATE"**. Đợi vài giây rồi chọn project
+   vừa tạo trong ô chọn project ở bước 2.
+
+### 3.2. Bật Google Sheets API
+
+1. Dùng thanh tìm kiếm trên cùng (biểu tượng kính lúp), gõ **"Google Sheets API"** → bấm vào kết
+   quả tìm được.
+2. Bấm nút **"ENABLE"** (màu xanh). Nếu nút hiện "MANAGE" nghĩa là đã bật sẵn rồi, bỏ qua.
+
+### 3.3. Tạo Service Account
+
+1. Dùng thanh tìm kiếm, gõ **"Service Accounts"** → bấm vào mục **"Service Accounts"** (nằm dưới
+   IAM & Admin).
+2. Bấm **"+ CREATE SERVICE ACCOUNT"** ở trên cùng.
+3. Ô **"Service account name"**: gõ tên bất kỳ, ví dụ `finisher-cert-bot` → bấm **"CREATE AND
+   CONTINUE"**.
+4. Bước "Grant this service account access to project": **bỏ qua**, bấm **"CONTINUE"**.
+5. Bước "Grant users access": **bỏ qua**, bấm **"DONE"**.
+
+### 3.4. Tạo và tải file JSON key
+
+1. Trong danh sách Service Accounts vừa hiện ra, bấm vào service account vừa tạo (dòng có email
+   dạng `finisher-cert-bot@<project-id>.iam.gserviceaccount.com`).
+2. Chuyển sang tab **"KEYS"** ở trên.
+3. Bấm **"ADD KEY" → "Create new key"**.
+4. Chọn định dạng **JSON** → bấm **"CREATE"**.
+5. File JSON sẽ **tự động tải xuống** thư mục Downloads trên máy bạn (tên file dạng
+   `<project-id>-xxxxxxxxxxxx.json`). **Đây chính là file `service_account.json`** — không có cách
+   nào tải lại file y hệt lần 2, nếu mất phải tạo key mới.
+
+### 3.5. Dùng file này
+
+- **Chạy local:** đổi tên file vừa tải thành `service_account.json`, đặt vào thư mục `credentials/`
+  trong project (đường dẫn: `credentials/service_account.json`).
+- **Deploy Vercel:** không copy file vào repo — mở file bằng text editor, copy toàn bộ nội dung,
+  dán vào biến môi trường `GOOGLE_CREDENTIALS_JSON` trên Vercel (xem mục 5 bên dưới).
+
+### 3.6. Cấp quyền cho Service Account vào Google Sheet
+
+1. Mở file JSON, tìm và copy giá trị `client_email` (dạng
+   `finisher-cert-bot@<project-id>.iam.gserviceaccount.com`).
+2. Mở Google Sheet bạn muốn ghi dữ liệu vào → bấm nút **Share** (góc trên bên phải) → dán email
+   vừa copy vào ô mời → chọn quyền **Editor** → bấm **Send/Share**.
+3. Lấy Sheet ID từ URL của Google Sheet:
+   `https://docs.google.com/spreadsheets/d/`**`<SHEET_ID>`**`/edit`
+4. Chạy local: mở `.env`, điền `GOOGLE_SHEET_ID=<SHEET_ID>` (có thể để trống và nhập trực tiếp
+   trên giao diện web). Deploy Vercel: điền vào biến môi trường `GOOGLE_SHEET_ID` (mục 5).
+
+> Lưu ý: file `service_account.json` (dù đặt local hay dán vào Vercel) và `.env` chứa thông tin
+> bí mật — không commit lên GitHub, không chia sẻ công khai.
 
 ## 4. Chạy ứng dụng (local)
 
