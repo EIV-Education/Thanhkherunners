@@ -51,7 +51,7 @@ EXTRACTION_PROMPT = (
     "Đây là ảnh chụp finisher certificate (chứng nhận hoàn thành) của một giải chạy bộ. "
     "Hãy đọc kỹ ảnh và trích xuất chính xác 4 thông tin sau:\n"
     "1. full_name: Họ và tên đầy đủ của người chạy\n"
-    "2. distance: Cự ly (ví dụ 5K, 10K, 21K, 42K, Half Marathon, Full Marathon...)\n"
+    "2. distance: Cự ly (ví dụ 5K, 10K, Half Marathon, Full Marathon...)\n"
     "3. finish_time: Thành tích / chip time (định dạng giờ:phút:giây, ví dụ 01:52:33)\n"
     "4. race_name: Tên giải chạy\n"
     "Nếu ảnh mờ hoặc không đọc được một trường nào đó, để giá trị là chuỗi rỗng \"\" cho "
