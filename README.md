@@ -1,12 +1,19 @@
-# Finisher Certificate Extractor
+# Thanh Khê Runners — website CLB + Finisher Certificate Extractor
 
-Web app trích xuất thông tin từ ảnh **finisher certificate** (chứng nhận hoàn thành giải chạy):
-họ tên, cự ly, thành tích (chip time), tên giải chạy — sau đó xuất ra Google Sheet.
+Website của CLB Thanh Khê Runners: trang chủ giới thiệu CLB, đội ngũ Core Team, và **bảng vinh
+danh** tự động xếp hạng runner theo cự ly (Full Marathon / Half Marathon / 10K / 5K...) từ nhanh
+đến chậm — cộng với công cụ trích xuất thông tin từ ảnh **finisher certificate** (chứng nhận
+hoàn thành giải chạy): họ tên, cự ly, thành tích (chip time), tên giải chạy — sau đó xuất ra
+Google Sheet.
 
+- Trang chủ (`/`) tự đọc dữ liệu từ Google Sheet và dựng bảng vinh danh theo từng cự ly —
+  không cần thao tác gì thêm, chỉ cần có người nộp thành tích qua công cụ trích xuất.
+- Công cụ trích xuất chuyển sang route `/trich-xuat` (có link "← Trang chủ" quay lại trang chủ).
 - Đọc ảnh bằng Gemini Vision (Google AI API), không cần layout cố định.
 - Kéo-thả nhiều ảnh cùng lúc, xem trước và sửa tay kết quả trước khi xuất.
 - Xuất ra Google Sheet qua **Google Apps Script Web App** — chỉ cần dán 1 đoạn script vào
   chính Google Sheet, không cần Google Cloud Console, không cần service account hay JSON key.
+  Script này cũng là nơi trang chủ đọc dữ liệu về để dựng bảng vinh danh.
 - Tự động điền thời gian xuất (cột "Dấu thời gian") và tự động upload ảnh certificate gốc lên
   một folder Google Drive của bạn, điền link vào cột "Ảnh Runners".
 
@@ -65,6 +72,12 @@ ghi dữ liệu, rồi lấy 1 đường link duy nhất.
 > vẫn giữ nguyên, không cần đổi lại trên app). Nếu code vừa thêm quyền mới (ví dụ mới thêm phần
 > lưu ảnh lên Drive), lần deploy tiếp theo có thể hỏi cấp quyền lại — cứ Authorize/Allow như bước 10.
 
+> ⚠️ **Nếu bạn đã deploy `Code.gs` từ trước** (trước khi có bảng vinh danh): bản `Code.gs` hiện
+> tại có thêm hàm `doGet` để trang chủ đọc dữ liệu về dựng bảng vinh danh. Bắt buộc phải dán lại
+> toàn bộ nội dung file mới vào Apps Script editor của bạn rồi **Deploy → Manage deployments →
+> ✏️ → New version → Deploy** thì trang chủ mới đọc được dữ liệu (link Web App không đổi). Nếu bỏ
+> qua bước này, trang chủ vẫn chạy bình thường nhưng bảng vinh danh sẽ luôn trống.
+
 ### Ảnh certificate lưu ở đâu trên Drive?
 
 Script tự tạo (hoặc dùng lại nếu đã có) 1 folder tên **"Finisher Certificates"** trong Google
@@ -111,29 +124,46 @@ Project đã có sẵn `vercel.json` + `api/index.py` để chạy dưới dạn
 
 ## 6. Sử dụng
 
-1. Kéo-thả (hoặc chọn) nhiều ảnh finisher certificate vào ô upload.
-2. Bấm **Trích xuất dữ liệu** — Gemini sẽ đọc từng ảnh và điền vào bảng kết quả
+1. Trang chủ (`/`) hiển thị giới thiệu CLB, Core Team và bảng vinh danh — tự động đọc lại từ
+   Google Sheet mỗi lần tải trang, không cần thao tác gì thêm.
+2. Bấm **Nộp thành tích** (hoặc vào `/trich-xuat`) để mở công cụ trích xuất.
+3. Kéo-thả (hoặc chọn) nhiều ảnh finisher certificate vào ô upload.
+4. Bấm **Trích xuất dữ liệu** — Gemini sẽ đọc từng ảnh và điền vào bảng kết quả
    (Họ tên / Cự ly / Thành tích / Giải chạy).
-3. Kiểm tra, sửa lại trực tiếp trong bảng nếu Gemini đọc sai hoặc thiếu thông tin
+5. Kiểm tra, sửa lại trực tiếp trong bảng nếu Gemini đọc sai hoặc thiếu thông tin
    (ảnh mờ sẽ để trống thay vì bịa số liệu).
-4. Nhập/kiểm tra **link Google Apps Script Web App** và **tên tab** (nếu cần), bấm
-   **Xuất ra Google Sheet**. Dữ liệu sẽ được nối thêm (append) vào cuối sheet theo đúng thứ tự
+6. Bấm **Xác Nhận Lưu**. Dữ liệu sẽ được nối thêm (append) vào cuối sheet theo đúng thứ tự
    cột đã cấu hình trong `HEADER_ROW` (mặc định: Dấu thời gian, Họ Tên Runners, Cự ly, Thời gian
    hoàn thành, Giải Chạy, Ảnh Runners); nếu sheet đang trống, dòng tiêu đề sẽ tự động được thêm
    vào. Ảnh certificate gốc cũng được tải lên cùng lúc để lưu vào Drive và điền link vào cột
    Ảnh Runners — bước này có thể mất vài giây tuỳ số lượng/kích thước ảnh.
+7. Quay lại trang chủ (hoặc tải lại trang) để thấy thành tích vừa nộp xuất hiện ngay trong bảng
+   vinh danh đúng cự ly.
+
+## Cách bảng vinh danh xếp hạng
+
+- Trang chủ gọi `doGet` trong `Code.gs` để lấy toàn bộ dữ liệu hiện có trên Sheet.
+- Cột **Cự ly** được gom nhóm theo từ khoá: chứa "full"/"42" → Full Marathon, "half"/"21" →
+  Half Marathon, "10" → 10K, "5" → 5K; cự ly khác giữ nguyên tên gốc thành 1 bảng riêng.
+- Trong mỗi bảng, runner được xếp theo **Thời gian hoàn thành** từ nhanh đến chậm (dòng không đọc
+  được thời gian hợp lệ sẽ xếp cuối bảng thay vì bị loại bỏ).
+- Các bảng cự ly được sắp theo cự ly xa → gần (Full Marathon trước, 5K sau).
+- Chỉ số trên trang chủ (số runner, số thành tích, số giải, PR Full Marathon của CLB) đều tính
+  trực tiếp từ dữ liệu thật trên Sheet — sheet trống thì các chỉ số này hiển thị 0.
 
 ## Cấu trúc project
 
 ```
-app.py                    # Flask backend: trích xuất ảnh (Gemini) + gọi Apps Script để ghi Sheet
+app.py                    # Flask backend: trích xuất ảnh (Gemini), đọc/xếp bảng vinh danh, gọi Apps Script để ghi Sheet
 api/index.py               # Entry point cho Vercel Serverless Function (re-export app từ app.py)
 vercel.json                 # Cấu hình routing cho Vercel
-google-apps-script/Code.gs  # Script dán vào Google Sheet để nhận dữ liệu (xem mục 3)
-templates/index.html
+google-apps-script/Code.gs  # Script dán vào Google Sheet: ghi dữ liệu (doPost) + đọc dữ liệu (doGet) (xem mục 3)
+templates/home.html         # Trang chủ CLB: hero, Core Team, bảng vinh danh, giới thiệu
+templates/index.html        # Công cụ trích xuất (route /trich-xuat)
+static/home.css / home.js   # Style + hiệu ứng dải cờ (bunting) cho trang chủ
 static/style.css
 static/script.js
-static/images/             # Đặt file logo/ảnh bìa (cover.jpg) vào đây
+static/images/             # Đặt file logo/ảnh bìa (cover.jpg) và logo nav (nav-mark.png) vào đây
 .env                        # Biến môi trường khi chạy local (gitignored)
 ```
 

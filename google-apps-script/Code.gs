@@ -1,6 +1,11 @@
 /**
  * Finisher Certificate Extractor — Google Apps Script Web App
  *
+ * File này xử lý cả 2 chiều:
+ * - doPost: nhận dữ liệu từ app, ghi vào Sheet + lưu ảnh certificate lên Drive.
+ * - doGet: trả toàn bộ dữ liệu trong Sheet dạng JSON, để app tự tính bảng vinh danh
+ *   (xếp hạng theo cự ly) trên trang chủ.
+ *
  * Cách dùng:
  * 1. Mở Google Sheet muốn ghi dữ liệu vào.
  * 2. Vào menu Extensions (Tiện ích mở rộng) → Apps Script.
@@ -79,6 +84,45 @@ function doPost(e) {
     });
 
     return jsonOutput({ status: "ok", rows_written: rows.length });
+  } catch (err) {
+    return jsonOutput({ error: String(err) });
+  }
+}
+
+function doGet(e) {
+  try {
+    var params = (e && e.parameter) || {};
+    if (SECRET && params.secret !== SECRET) {
+      return jsonOutput({ error: "Sai secret, kiểm tra lại GOOGLE_SCRIPT_SECRET." });
+    }
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = params.sheet_tab
+      ? (ss.getSheetByName(params.sheet_tab) || ss.getActiveSheet())
+      : ss.getActiveSheet();
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return jsonOutput({ rows: [] });
+    }
+
+    var values = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+    var rows = values
+      .map(function (r) {
+        return {
+          timestamp: r[0] ? String(r[0]) : "",
+          full_name: r[1] || "",
+          distance: r[2] || "",
+          finish_time: r[3] || "",
+          race_name: r[4] || "",
+          image_url: r[5] || "",
+        };
+      })
+      .filter(function (r) {
+        return r.full_name;
+      });
+
+    return jsonOutput({ rows: rows });
   } catch (err) {
     return jsonOutput({ error: String(err) });
   }

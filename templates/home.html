@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CLB Thanh Khê Runners</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}" />
+</head>
+<body>
+  <nav class="nav">
+    <a class="nav-brand" href="#top">
+      <img class="nav-mark" src="{{ url_for('static', filename='images/nav-mark.png') }}" alt="Logo Thanh Khê Runners" />
+      <span class="display">THANH KHÊ RUNNERS</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#top" class="active">Trang chủ</a></li>
+      <li><a href="#core-team">Core Team</a></li>
+      <li><a href="#vinh-danh">Bảng vinh danh</a></li>
+      <li><a href="#gioi-thieu">Giới thiệu</a></li>
+      <li><a href="{{ url_for('index') }}">Nộp thành tích</a></li>
+    </ul>
+    <a class="nav-cta" href="{{ url_for('index') }}">Nộp thành tích →</a>
+  </nav>
+  <div class="flag-stripe"></div>
+
+  <header class="hero" id="top">
+    <div class="hero-inner">
+      <h1 class="display">Chạy là đam mê<br /><em>đồng đội là sức mạnh</em></h1>
+      <p class="lede">Nơi lưu lại từng cột mốc của các thành viên Thanh Khê Runners — nộp chứng nhận hoàn thành, hệ thống tự đọc kết quả và xếp bạn vào đúng bảng vinh danh theo cự ly.</p>
+      <div class="hero-actions">
+        <a class="btn btn-solid" href="{{ url_for('index') }}">Nộp thành tích mới</a>
+        <a class="btn btn-outline" href="#vinh-danh">Xem bảng vinh danh</a>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num mono">{{ stats.runners }}</div><div class="label">Runner đã ghi danh</div></div>
+      <div class="hero-stat"><div class="num mono">{{ stats.submissions }}</div><div class="label">Thành tích đã nộp</div></div>
+      <div class="hero-stat"><div class="num mono">{{ stats.races }}</div><div class="label">Giải đã chinh phục</div></div>
+      <div class="hero-stat"><div class="num mono">{{ stats.best_full_marathon }}</div><div class="label">PR Full Marathon CLB</div></div>
+    </div>
+  </header>
+
+  <div class="bunting" id="bunting" aria-hidden="true"></div>
+
+  <section class="page dark-block" id="core-team">
+    <div class="section-head">
+      <p class="eyebrow">Core Team</p>
+      <h2 class="display" style="color:#fff;">Đội ngũ nòng cốt</h2>
+      <p>Đoàn Kết · Kỷ Luật · Nhiệt Huyết · Lan Tỏa</p>
+    </div>
+    <div class="core-grid">
+      {% for member in core_team %}
+      <div class="core-card">
+        <span class="core-num">{{ loop.index }}</span>
+        <div class="core-avatar" style="background:linear-gradient(135deg, {{ member.gradient[0] }}, {{ member.gradient[1] }});">{{ member.initials }}</div>
+        <div class="core-name">{{ member.name }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="core-tagline">
+      <span>Chạy vì sức khỏe</span><span>Chạy vì đam mê</span><span>Chạy để kết nối</span><span>Chạy để lan tỏa</span>
+    </div>
+  </section>
+
+  <div class="bunting" aria-hidden="true" style="transform: scaleY(-1);" id="bunting2"></div>
+
+  <section class="page" id="vinh-danh">
+    <div class="section-head">
+      <p class="eyebrow">Bảng vinh danh</p>
+      <h2 class="display">Xếp hạng theo cự ly</h2>
+      <p>Tự động cập nhật mỗi khi có thành tích mới được nộp — xếp từ thành tích nhanh nhất tới chậm nhất trong từng cự ly.</p>
+    </div>
+
+    {% if leaderboard %}
+    <div class="hof-grid">
+      {% for category in leaderboard %}
+      <div class="hof-card">
+        <div class="hof-card-head">
+          <h3>{{ category.label }}</h3>
+          <span>{{ category.count }} thành tích</span>
+        </div>
+        <div class="hof-table-wrap">
+          <table class="hof">
+            <thead>
+              <tr><th>#</th><th>Runner</th><th>Thành tích</th></tr>
+            </thead>
+            <tbody>
+              {% for entry in category.entries %}
+              <tr>
+                <td><span class="rank {% if entry.rank == 1 %}r1{% elif entry.rank == 2 %}r2{% elif entry.rank == 3 %}r3{% endif %}">{{ entry.rank }}</span></td>
+                <td><span class="runner-name">{{ entry.full_name }}</span><span class="runner-race">{{ entry.race_name }}</span></td>
+                <td class="time mono">{{ entry.finish_time }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="hof-card">
+      <div class="hof-empty">Chưa có thành tích nào được nộp. Hãy là người đầu tiên ghi danh vào bảng vinh danh! <a href="{{ url_for('index') }}">Nộp thành tích ngay →</a></div>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="page about" id="gioi-thieu">
+    <div class="about-grid">
+      <div>
+        <p class="eyebrow">Giới thiệu</p>
+        <h2 class="display">Về Thanh Khê Runners</h2>
+        <p>Câu lạc bộ Thanh Khê Runners (TKR) được thành lập trên tinh thần <strong>tự nguyện, đoàn kết, hỗ trợ và chia sẻ</strong> giữa những người yêu thích chạy bộ tại quận Thanh Khê, Đà Nẵng — quy tụ mọi trình độ, từ người mới bắt đầu 5K đến các pacer full marathon.</p>
+        <p>Trang này giúp CLB lưu lại hành trình của từng thành viên: chỉ cần nộp ảnh chứng nhận hoàn thành, hệ thống tự đọc thông tin và cập nhật ngay vào bảng vinh danh.</p>
+        <p style="font-size:0.86rem; color:var(--ink-muted);">CLB hoạt động trên nguyên tắc tài chính <strong>tự nguyện — minh bạch — không vụ lợi cá nhân</strong>; mọi hoạt động đều do Core Team và hội viên cùng thống nhất theo Điều lệ CLB.</p>
+      </div>
+      <div class="about-pillars">
+        <div class="pillar">
+          <span class="pillar-mark">01</span>
+          <div><h4>Rèn luyện sức khỏe</h4><p>Nâng cao thể chất, xây dựng thói quen vận động bền vững cho từng hội viên.</p></div>
+        </div>
+        <div class="pillar">
+          <span class="pillar-mark">02</span>
+          <div><h4>Sân chơi lành mạnh</h4><p>Tạo sân chơi lành mạnh, gắn kết cộng đồng những người yêu thể thao.</p></div>
+        </div>
+        <div class="pillar">
+          <span class="pillar-mark">03</span>
+          <div><h4>Chinh phục giải chạy</h4><p>Tổ chức và tham gia các giải chạy phong trào trong và ngoài địa phương.</p></div>
+        </div>
+        <div class="pillar">
+          <span class="pillar-mark">04</span>
+          <div><h4>Lan tỏa hình ảnh</h4><p>Góp phần quảng bá hình ảnh Thanh Khê Runners năng động, khỏe mạnh.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="nop-thanh-tich">
+    <div class="tool-cta">
+      <div class="tool-copy">
+        <p class="eyebrow">Công cụ trích xuất</p>
+        <h2 class="display">Vừa về đích? Nộp chứng nhận ngay</h2>
+        <p>Kéo-thả ảnh finisher certificate — hệ thống tự đọc họ tên, cự ly, thành tích, tên giải, bạn chỉ cần xác nhận là xong. Kết quả sẽ tự động xếp vào đúng bảng vinh danh theo cự ly.</p>
+        <a class="btn" href="{{ url_for('index') }}">Mở công cụ trích xuất →</a>
+      </div>
+      <div class="tool-preview">
+        <div class="mock-drop">
+          <strong>📤 Kéo-thả ảnh certificate vào đây</strong>
+          Hỗ trợ PNG / JPEG / WEBP / GIF
+        </div>
+        <div class="mock-row"><span class="dot"></span> Đã đọc: họ tên — cự ly — thành tích</div>
+        <div class="mock-row"><span class="dot"></span> Xác nhận là tự động lên bảng vinh danh</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site">
+    <div class="foot-brand display">THANH KHÊ RUNNERS</div>
+    <div class="foot-links">
+      <a href="#top">Trang chủ</a>
+      <a href="#vinh-danh">Bảng vinh danh</a>
+      <a href="#gioi-thieu">Giới thiệu</a>
+      <a href="{{ url_for('index') }}">Nộp thành tích</a>
+    </div>
+    <div class="credit">Powered by ANH NGUYỄN</div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='home.js') }}"></script>
+</body>
+</html>

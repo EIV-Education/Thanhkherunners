@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
@@ -88,7 +89,139 @@ def _friendly_gemini_error(exc: Exception) -> str:
     return text
 
 
+CORE_TEAM = [
+    {"name": "Phạm Đình Tuấn", "initials": "PT", "gradient": ("var(--orange)", "var(--teal-bright)")},
+    {"name": "Nguyễn Văn Anh", "initials": "NA", "gradient": ("var(--teal-bright)", "var(--flag-gold)")},
+    {"name": "Đàm Tường Quang", "initials": "ĐQ", "gradient": ("var(--flag-gold)", "var(--orange)")},
+    {"name": "Huỳnh Trung Phúc", "initials": "HP", "gradient": ("var(--orange)", "var(--flag-gold)")},
+    {"name": "Cao Văn Tâm", "initials": "CT", "gradient": ("var(--teal-bright)", "var(--orange)")},
+    {"name": "Nguyễn Dương Hiếu", "initials": "NH", "gradient": ("var(--flag-gold)", "var(--teal-bright)")},
+    {"name": "Đỗ Hoàng Nhật", "initials": "ĐN", "gradient": ("var(--orange)", "var(--teal-bright)")},
+    {"name": "Lê Công Sanh", "initials": "LS", "gradient": ("var(--teal-bright)", "var(--flag-gold)")},
+    {"name": "Hoàng Nguyễn Lê Sinh", "initials": "HS", "gradient": ("var(--flag-gold)", "var(--orange)")},
+    {"name": "Phan Quốc Việt", "initials": "PV", "gradient": ("var(--orange)", "var(--flag-gold)")},
+]
+
+
+def normalize_distance(raw: str):
+    """Gộp chuỗi cự ly thô (do người dùng nhập hoặc Gemini đọc được) về 1 nhóm cự ly
+    chuẩn để xếp bảng vinh danh. Trả về (key, label, km) hoặc None nếu bỏ trống."""
+    text = (raw or "").strip()
+    if not text:
+        return None
+    low = text.lower()
+    if "full" in low or "42" in low:
+        return ("full_marathon", "Full Marathon", 42.195)
+    if "half" in low or "21" in low:
+        return ("half_marathon", "Half Marathon", 21.1)
+    if "10" in low:
+        return ("10k", "10K", 10.0)
+    if "5" in low:
+        return ("5k", "5K", 5.0)
+    match = re.search(r"(\d+(?:[.,]\d+)?)", low)
+    if match:
+        km = float(match.group(1).replace(",", "."))
+        return (f"other_{km}", text, km)
+    return (f"other_{low}", text, 0.0)
+
+
+def time_to_seconds(raw: str):
+    """Chuyển chuỗi thời gian dạng HH:MM:SS hoặc MM:SS thành số giây để so sánh, xếp hạng."""
+    text = (raw or "").strip()
+    if not text:
+        return None
+    parts = text.split(":")
+    try:
+        parts = [int(p) for p in parts]
+    except ValueError:
+        return None
+    if len(parts) == 3:
+        h, m, s = parts
+    elif len(parts) == 2:
+        h = 0
+        m, s = parts
+    else:
+        return None
+    return h * 3600 + m * 60 + s
+
+
+def fetch_sheet_rows() -> list:
+    """Đọc toàn bộ dữ liệu đã nộp từ Google Sheet (qua Apps Script doGet). Trả về [] nếu
+    chưa cấu hình GOOGLE_SCRIPT_URL hoặc gọi lỗi - không làm crash trang chủ."""
+    if not GOOGLE_SCRIPT_URL:
+        return []
+    params = {}
+    if GOOGLE_SHEET_TAB:
+        params["sheet_tab"] = GOOGLE_SHEET_TAB
+    if GOOGLE_SCRIPT_SECRET:
+        params["secret"] = GOOGLE_SCRIPT_SECRET
+    try:
+        resp = requests.get(GOOGLE_SCRIPT_URL, params=params, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+    except (requests.exceptions.RequestException, ValueError):
+        return []
+    if not isinstance(data, dict) or data.get("error"):
+        return []
+    return data.get("rows", []) or []
+
+
+def build_leaderboard(rows: list) -> list:
+    """Gộp các dòng thành tích theo cự ly, xếp hạng nhanh → chậm trong từng cự ly,
+    rồi sắp các bảng cự ly theo thứ tự xa → gần (full marathon trước, 5K sau)."""
+    groups = {}
+    for row in rows:
+        normalized = normalize_distance(row.get("distance"))
+        if not normalized:
+            continue
+        key, label, km = normalized
+        group = groups.setdefault(key, {"key": key, "label": label, "km": km, "entries": []})
+        group["entries"].append(
+            {
+                "full_name": row.get("full_name", ""),
+                "finish_time": row.get("finish_time", ""),
+                "race_name": row.get("race_name", ""),
+                "_seconds": time_to_seconds(row.get("finish_time")),
+            }
+        )
+
+    categories = []
+    for group in groups.values():
+        group["entries"].sort(key=lambda e: (e["_seconds"] is None, e["_seconds"]))
+        for idx, entry in enumerate(group["entries"], start=1):
+            entry["rank"] = idx
+            del entry["_seconds"]
+        group["count"] = len(group["entries"])
+        categories.append(group)
+
+    categories.sort(key=lambda g: g["km"], reverse=True)
+    return categories
+
+
 @app.route("/")
+def home():
+    rows = fetch_sheet_rows()
+    leaderboard = build_leaderboard(rows)
+
+    full_marathon = next((g for g in leaderboard if g["key"] == "full_marathon"), None)
+    stats = {
+        "runners": len({(r.get("full_name") or "").strip() for r in rows if r.get("full_name")}),
+        "submissions": len(rows),
+        "races": len({(r.get("race_name") or "").strip() for r in rows if r.get("race_name")}),
+        "best_full_marathon": (
+            full_marathon["entries"][0]["finish_time"] if full_marathon and full_marathon["entries"] else "—"
+        ),
+    }
+
+    return render_template(
+        "home.html",
+        leaderboard=leaderboard,
+        core_team=CORE_TEAM,
+        stats=stats,
+    )
+
+
+@app.route("/trich-xuat")
 def index():
     return render_template(
         "index.html",
