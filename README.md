@@ -7,6 +7,8 @@ họ tên, cự ly, thành tích (chip time), tên giải chạy — sau đó xu
 - Kéo-thả nhiều ảnh cùng lúc, xem trước và sửa tay kết quả trước khi xuất.
 - Xuất ra Google Sheet qua **Google Apps Script Web App** — chỉ cần dán 1 đoạn script vào
   chính Google Sheet, không cần Google Cloud Console, không cần service account hay JSON key.
+- Tự động điền thời gian xuất (cột "Dấu thời gian") và tự động upload ảnh certificate gốc lên
+  một folder Google Drive của bạn, điền link vào cột "Ảnh Runners".
 
 ## 1. Cài đặt
 
@@ -32,29 +34,44 @@ ghi dữ liệu, rồi lấy 1 đường link duy nhất.
 3. Xoá hết code mẫu có sẵn trong ô soạn thảo, mở file
    [`google-apps-script/Code.gs`](google-apps-script/Code.gs) trong project này, copy toàn bộ nội
    dung, dán vào.
-4. *(Tuỳ chọn, nên làm nếu Sheet chứa dữ liệu quan trọng)* Sửa dòng `var SECRET = "";` thành một
+4. Kiểm tra biến `HEADER_ROW` ở đầu file khớp với thứ tự cột trong Sheet của bạn (mặc định:
+   Dấu thời gian / Họ Tên Runners / Cự ly / Thời gian hoàn thành / Giải Chạy / Ảnh Runners) —
+   sửa lại nếu Sheet của bạn có cột khác thứ tự này. **Chỉ áp dụng khi Sheet đang trống** (nếu
+   Sheet đã có dữ liệu/tiêu đề sẵn, script sẽ không tự thêm tiêu đề mới, chỉ nối dữ liệu vào các
+   cột theo đúng thứ tự trong `HEADER_ROW` — nên thứ tự này phải khớp với cột thật trên Sheet).
+5. *(Tuỳ chọn, nên làm nếu Sheet chứa dữ liệu quan trọng)* Sửa dòng `var SECRET = "";` thành một
    chuỗi bí mật tuỳ ý, ví dụ `var SECRET = "tkr-2026-bimat";` — để chặn người khác có link Web App
    ghi rác vào Sheet của bạn.
-5. Bấm **Save** (biểu tượng đĩa mềm, hoặc Ctrl/Cmd+S).
-6. Bấm nút **Deploy** (góc trên bên phải) → **New deployment**.
-7. Ở mục **Select type**, bấm biểu tượng bánh răng ⚙️ → chọn **Web app**.
-8. Điền:
+6. Bấm **Save** (biểu tượng đĩa mềm, hoặc Ctrl/Cmd+S).
+7. Bấm nút **Deploy** (góc trên bên phải) → **New deployment**.
+8. Ở mục **Select type**, bấm biểu tượng bánh răng ⚙️ → chọn **Web app**.
+9. Điền:
    - **Execute as**: `Me`
-   - **Who has access**: `Anyone`
-9. Bấm **Deploy**. Lần đầu Google sẽ hỏi cấp quyền:
-   - Bấm **Authorize access** → chọn tài khoản Google của bạn.
-   - Nếu hiện cảnh báo **"Google hasn't verified this app"**: bấm **Advanced** →
-     **Go to <tên project> (unsafe)** → **Allow**. Đây là bình thường, vì đây là script do
-     chính bạn viết và deploy, chỉ chạy trên Sheet của bạn.
-10. Copy đường link **"Web app URL"** hiện ra (dạng
+   - **Who has access**: `Anyone` (không phải "Only myself" hay "Anyone with Google account" —
+     chọn sai mục này sẽ gây lỗi `401 Unauthorized` khi app gọi vào)
+10. Bấm **Deploy**. Lần đầu Google sẽ hỏi cấp quyền (script cần quyền Sheets + Drive để lưu ảnh):
+    - Bấm **Authorize access** → chọn tài khoản Google của bạn.
+    - Nếu hiện cảnh báo **"Google hasn't verified this app"**: bấm **Advanced** →
+      **Go to <tên project> (unsafe)** → **Allow**. Đây là bình thường, vì đây là script do
+      chính bạn viết và deploy, chỉ chạy trên Sheet/Drive của bạn.
+11. Copy đường link **"Web app URL"** hiện ra (dạng
     `https://script.google.com/macros/s/xxxxxxxxxxxxx/exec`).
-11. Dán link đó vào ô **"Link Google Apps Script Web App"** ngay trên giao diện web của app
+12. Dán link đó vào ô **"Link Google Apps Script Web App"** ngay trên giao diện web của app
     (hoặc điền vào `.env`: `GOOGLE_SCRIPT_URL=...`).
-12. Nếu bước 4 có đặt `SECRET`, điền đúng chuỗi đó vào `.env`: `GOOGLE_SCRIPT_SECRET=...`.
+13. Nếu bước 5 có đặt `SECRET`, điền đúng chuỗi đó vào `.env`: `GOOGLE_SCRIPT_SECRET=...`.
 
 > Nếu sau này bạn sửa lại nội dung `Code.gs`, phải vào **Deploy → Manage deployments** → bấm biểu
 > tượng bút chì ✏️ → chọn **New version** → **Deploy** thì thay đổi mới có hiệu lực (link URL cũ
-> vẫn giữ nguyên, không cần đổi lại trên app).
+> vẫn giữ nguyên, không cần đổi lại trên app). Nếu code vừa thêm quyền mới (ví dụ mới thêm phần
+> lưu ảnh lên Drive), lần deploy tiếp theo có thể hỏi cấp quyền lại — cứ Authorize/Allow như bước 10.
+
+### Ảnh certificate lưu ở đâu trên Drive?
+
+Script tự tạo (hoặc dùng lại nếu đã có) 1 folder tên **"Finisher Certificates"** trong Google
+Drive của tài khoản bạn dùng để deploy script, lưu từng ảnh certificate vào đó, đặt quyền xem
+"Anyone with the link", rồi điền link dạng `https://drive.google.com/open?id=...` vào cột
+"Ảnh Runners". Muốn đổi tên folder, sửa biến `DRIVE_FOLDER_NAME` trong `Code.gs` (nhớ Deploy
+lại — New version — sau khi sửa).
 
 ## 4. Chạy ứng dụng (local)
 
@@ -85,8 +102,12 @@ Project đã có sẵn `vercel.json` + `api/index.py` để chạy dưới dạn
    trường để chúng có hiệu lực: **Deployments** → bấm **⋯** ở bản mới nhất → **Redeploy**).
 
 > ⚠️ Vercel giới hạn dung lượng body request (mặc định khoảng 4.5MB/request trên gói Hobby/Pro).
-> Nếu tải lên nhiều ảnh hoặc ảnh chụp gốc quá nặng cùng lúc có thể bị lỗi 413 — nên nén/resize ảnh
-> hoặc tải lên từng đợt ít ảnh hơn khi dùng bản deploy trên Vercel.
+> App có gửi kèm ảnh gốc (dạng base64, nặng hơn ảnh gốc ~33%) cả lúc trích xuất lẫn lúc xuất ra
+> Google Sheet (để lưu lên Drive), nên nếu tải lên nhiều ảnh hoặc ảnh chụp gốc quá nặng cùng lúc
+> có thể bị lỗi 413 — nên nén/resize ảnh hoặc xuất theo từng đợt ít ảnh hơn khi dùng bản deploy
+> trên Vercel.
+> `vercel.json` đã đặt `maxDuration: 60` giây cho function (do bước upload ảnh lên Drive cần thêm
+> thời gian) — gói Hobby có thể giới hạn thấp hơn mức này tuỳ chính sách hiện tại của Vercel.
 
 ## 6. Sử dụng
 
@@ -96,8 +117,11 @@ Project đã có sẵn `vercel.json` + `api/index.py` để chạy dưới dạn
 3. Kiểm tra, sửa lại trực tiếp trong bảng nếu Gemini đọc sai hoặc thiếu thông tin
    (ảnh mờ sẽ để trống thay vì bịa số liệu).
 4. Nhập/kiểm tra **link Google Apps Script Web App** và **tên tab** (nếu cần), bấm
-   **Xuất ra Google Sheet**. Dữ liệu sẽ được nối thêm (append) vào cuối sheet; nếu sheet đang
-   trống, dòng tiêu đề sẽ tự động được thêm vào.
+   **Xuất ra Google Sheet**. Dữ liệu sẽ được nối thêm (append) vào cuối sheet theo đúng thứ tự
+   cột đã cấu hình trong `HEADER_ROW` (mặc định: Dấu thời gian, Họ Tên Runners, Cự ly, Thời gian
+   hoàn thành, Giải Chạy, Ảnh Runners); nếu sheet đang trống, dòng tiêu đề sẽ tự động được thêm
+   vào. Ảnh certificate gốc cũng được tải lên cùng lúc để lưu vào Drive và điền link vào cột
+   Ảnh Runners — bước này có thể mất vài giây tuỳ số lượng/kích thước ảnh.
 
 ## Cấu trúc project
 

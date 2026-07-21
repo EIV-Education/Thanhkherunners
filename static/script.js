@@ -67,8 +67,11 @@ fileInput.addEventListener("change", (e) => {
   fileInput.value = "";
 });
 
-function addResultRow(row) {
+function addResultRow(row, file) {
   const tr = document.createElement("tr");
+  if (file) {
+    tr._imageFile = file;
+  }
 
   const filenameCell = document.createElement("td");
   filenameCell.textContent = row.filename || "";
@@ -108,8 +111,9 @@ extractBtn.addEventListener("click", async () => {
   extractErrors.hidden = true;
   extractErrors.innerHTML = "";
 
+  const filesSnapshot = [...pendingFiles];
   const formData = new FormData();
-  pendingFiles.forEach((file) => formData.append("images", file));
+  filesSnapshot.forEach((file) => formData.append("images", file));
 
   try {
     const res = await fetch("/api/extract", { method: "POST", body: formData });
@@ -123,7 +127,8 @@ extractBtn.addEventListener("click", async () => {
       return;
     }
 
-    (data.results || []).forEach(addResultRow);
+    const fileByName = new Map(filesSnapshot.map((f) => [f.name, f]));
+    (data.results || []).forEach((row) => addResultRow(row, fileByName.get(row.filename)));
 
     if (data.results && data.results.length > 0) {
       resultsSection.hidden = false;
@@ -163,17 +168,22 @@ function renderExtractErrors(errors) {
   extractErrors.hidden = false;
 }
 
-exportBtn.addEventListener("click", async () => {
-  const rows = [];
-  resultsBody.querySelectorAll("tr").forEach((tr) => {
-    const row = {};
-    tr.querySelectorAll("input[data-field]").forEach((input) => {
-      row[input.dataset.field] = input.value.trim();
-    });
-    rows.push(row);
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      resolve(result.substring(result.indexOf(",") + 1));
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
   });
+}
 
-  if (rows.length === 0) {
+exportBtn.addEventListener("click", async () => {
+  const trList = Array.from(resultsBody.querySelectorAll("tr"));
+
+  if (trList.length === 0) {
     exportStatus.textContent = "Không có dữ liệu để xuất.";
     exportStatus.className = "status error";
     return;
@@ -187,10 +197,26 @@ exportBtn.addEventListener("click", async () => {
   }
 
   exportBtn.disabled = true;
-  exportStatus.textContent = "Đang xuất ra Google Sheet...";
+  exportStatus.textContent = "Đang xuất ra Google Sheet (đang tải ảnh lên, có thể mất chút thời gian)...";
   exportStatus.className = "status";
 
   try {
+    const rows = await Promise.all(
+      trList.map(async (tr) => {
+        const row = {};
+        tr.querySelectorAll("input[data-field]").forEach((input) => {
+          row[input.dataset.field] = input.value.trim();
+        });
+        const file = tr._imageFile;
+        if (file) {
+          row.filename = file.name;
+          row.image_mime_type = file.type || "image/jpeg";
+          row.image_base64 = await readFileAsBase64(file);
+        }
+        return row;
+      })
+    );
+
     const res = await fetch("/api/export", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

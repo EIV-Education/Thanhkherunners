@@ -7,30 +7,38 @@
  * 3. Xoá hết code mẫu có sẵn (myFunction...), dán toàn bộ nội dung file này vào.
  * 4. (Tuỳ chọn nhưng nên làm) Đổi biến SECRET bên dưới thành một chuỗi bí mật tuỳ ý,
  *    để tránh người khác có link Web App gọi vào ghi rác dữ liệu.
- * 5. Bấm biểu tượng Save (đĩa mềm) hoặc Ctrl/Cmd+S.
- * 6. Bấm nút "Deploy" (góc trên bên phải) → "New deployment".
- * 7. Ở ô "Select type", bấm biểu tượng bánh răng → chọn "Web app".
- * 8. Cấu hình:
+ * 5. (Tuỳ chọn) Đổi DRIVE_FOLDER_NAME nếu muốn ảnh certificate lưu vào 1 folder Drive tên khác.
+ * 6. Bấm biểu tượng Save (đĩa mềm) hoặc Ctrl/Cmd+S.
+ * 7. Bấm nút "Deploy" (góc trên bên phải) → "New deployment".
+ * 8. Ở ô "Select type", bấm biểu tượng bánh răng → chọn "Web app".
+ * 9. Cấu hình:
  *      - Description: đặt tên tuỳ ý (vd "finisher-cert-export")
  *      - Execute as: Me
  *      - Who has access: Anyone
- * 9. Bấm "Deploy". Lần đầu Google sẽ yêu cầu cấp quyền — bấm "Authorize access",
- *    chọn tài khoản Google của bạn → nếu hiện cảnh báo "Google hasn't verified this app",
- *    bấm "Advanced" → "Go to <tên project> (unsafe)" → "Allow". Đây là bình thường vì
- *    đây là script do chính bạn viết/deploy, chỉ chạy trên sheet của bạn.
- * 10. Copy đường link "Web app URL" hiện ra (dạng
+ * 10. Bấm "Deploy". Lần đầu Google sẽ yêu cầu cấp quyền (script cần quyền Sheets + Drive để
+ *     lưu ảnh) — bấm "Authorize access", chọn tài khoản Google của bạn → nếu hiện cảnh báo
+ *     "Google hasn't verified this app", bấm "Advanced" → "Go to <tên project> (unsafe)" →
+ *     "Allow". Đây là bình thường vì đây là script do chính bạn viết/deploy, chỉ chạy trên
+ *     Sheet/Drive của bạn.
+ * 11. Copy đường link "Web app URL" hiện ra (dạng
  *     https://script.google.com/macros/s/xxxxx/exec) — dán vào ứng dụng
  *     Finisher Certificate Extractor (ô "Link Google Apps Script Web App").
  *
  * Nếu sau này bạn sửa lại code này, phải vào Deploy → Manage deployments → bấm biểu tượng
  * bút chì → chọn "New version" → Deploy thì thay đổi mới có hiệu lực (link URL không đổi).
+ * Nếu script vừa được thêm quyền mới (vd mới thêm phần lưu Drive), lần deploy tiếp theo có thể
+ * yêu cầu cấp quyền lại — cứ Authorize/Allow như bước 10.
  */
 
 // Để trống nếu không cần bảo mật thêm, hoặc đặt 1 chuỗi bí mật tuỳ ý (vd "tkr-2026-bimat").
 // Nếu đặt SECRET ở đây, nhớ điền đúng chuỗi đó vào biến GOOGLE_SCRIPT_SECRET của app.
 var SECRET = "";
 
-var HEADER_ROW = ["Họ tên", "Cự ly", "Thành tích", "Giải chạy"];
+// Cột trong Sheet theo đúng thứ tự sẽ ghi vào (đổi lại nếu Sheet của bạn có cột khác).
+var HEADER_ROW = ["Dấu thời gian", "Họ Tên Runners", "Cự ly", "Thời gian hoàn thành", "Giải Chạy", "Ảnh Runners"];
+
+// Tên folder trên Google Drive của bạn để lưu ảnh certificate. Nếu chưa có, script tự tạo mới.
+var DRIVE_FOLDER_NAME = "Finisher Certificates";
 
 function doPost(e) {
   try {
@@ -52,13 +60,45 @@ function doPost(e) {
 
     var rows = payload.rows || [];
     rows.forEach(function (r) {
-      sheet.appendRow([r.full_name || "", r.distance || "", r.finish_time || "", r.race_name || ""]);
+      var imageLink = "";
+      if (r.image_base64) {
+        try {
+          imageLink = saveImageToDrive(r.image_base64, r.image_mime_type || "image/jpeg", r.filename || "certificate.jpg");
+        } catch (imgErr) {
+          imageLink = "Lỗi lưu ảnh: " + String(imgErr);
+        }
+      }
+      sheet.appendRow([
+        new Date(),
+        r.full_name || "",
+        r.distance || "",
+        r.finish_time || "",
+        r.race_name || "",
+        imageLink,
+      ]);
     });
 
     return jsonOutput({ status: "ok", rows_written: rows.length });
   } catch (err) {
     return jsonOutput({ error: String(err) });
   }
+}
+
+function saveImageToDrive(base64Data, mimeType, filename) {
+  var folder = getOrCreateFolder(DRIVE_FOLDER_NAME);
+  var bytes = Utilities.base64Decode(base64Data);
+  var blob = Utilities.newBlob(bytes, mimeType, filename);
+  var file = folder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return "https://drive.google.com/open?id=" + file.getId();
+}
+
+function getOrCreateFolder(name) {
+  var folders = DriveApp.getFoldersByName(name);
+  if (folders.hasNext()) {
+    return folders.next();
+  }
+  return DriveApp.createFolder(name);
 }
 
 function jsonOutput(obj) {

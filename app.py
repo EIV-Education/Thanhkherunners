@@ -156,15 +156,20 @@ def api_export():
     if not rows:
         return jsonify({"error": "Không có dữ liệu để xuất."}), 400
 
-    clean_rows = [
-        {
+    clean_rows = []
+    for row in rows:
+        item = {
             "full_name": row.get("full_name", ""),
             "distance": row.get("distance", ""),
             "finish_time": row.get("finish_time", ""),
             "race_name": row.get("race_name", ""),
         }
-        for row in rows
-    ]
+        # Ảnh certificate gốc (base64) - Apps Script sẽ lưu lên Drive và điền link vào Sheet.
+        if row.get("image_base64"):
+            item["image_base64"] = row["image_base64"]
+            item["image_mime_type"] = row.get("image_mime_type", "image/jpeg")
+            item["filename"] = row.get("filename", "certificate.jpg")
+        clean_rows.append(item)
 
     body = {"rows": clean_rows}
     if sheet_tab:
@@ -173,7 +178,8 @@ def api_export():
         body["secret"] = GOOGLE_SCRIPT_SECRET
 
     try:
-        resp = requests.post(script_url, json=body, timeout=30)
+        # Timeout dài hơn bình thường vì Apps Script cần thời gian upload ảnh lên Drive.
+        resp = requests.post(script_url, json=body, timeout=120)
         resp.raise_for_status()
         result = resp.json()
     except requests.exceptions.RequestException as exc:
