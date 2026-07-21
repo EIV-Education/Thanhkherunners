@@ -26,7 +26,22 @@ ALLOWED_MIME_TYPES = {"image/png", "image/jpeg", "image/webp", "image/gif"}
 
 HEADER_ROW = ["Họ tên", "Cự ly", "Thành tích", "Giải chạy"]
 
-gemini_client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+_gemini_client = None
+
+
+def get_gemini_client() -> genai.Client:
+    """Tạo Gemini client khi thực sự cần dùng (lazy), tránh crash lúc import module
+    nếu thiếu GEMINI_API_KEY - quan trọng khi chạy trên serverless (Vercel)."""
+    global _gemini_client
+    if _gemini_client is None:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise RuntimeError(
+                "Thiếu biến môi trường GEMINI_API_KEY. Trên Vercel: vào Project Settings "
+                "→ Environment Variables để thêm; khi chạy local: điền vào file .env."
+            )
+        _gemini_client = genai.Client(api_key=api_key)
+    return _gemini_client
 
 
 class CertificateData(BaseModel):
@@ -49,7 +64,7 @@ EXTRACTION_PROMPT = (
 
 
 def extract_from_image(filename: str, image_bytes: bytes, media_type: str) -> dict:
-    response = gemini_client.models.generate_content(
+    response = get_gemini_client().models.generate_content(
         model=GEMINI_MODEL,
         contents=[
             types.Part.from_bytes(data=image_bytes, mime_type=media_type),
@@ -122,6 +137,28 @@ def api_extract():
     return jsonify({"results": results, "errors": errors})
 
 
+def _load_google_credentials():
+    """Ưu tiên đọc từ biến môi trường GOOGLE_CREDENTIALS_JSON (dán nguyên nội dung file
+    service_account.json vào - dùng cho Vercel/serverless, nơi không ghi được file lên đĩa).
+    Nếu không có, fallback đọc từ file cục bộ GOOGLE_CREDENTIALS_FILE (dùng khi chạy local)."""
+    raw_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+    if raw_json:
+        info = json.loads(raw_json)
+        return service_account.Credentials.from_service_account_info(
+            info, scopes=["https://www.googleapis.com/auth/spreadsheets"]
+        )
+    if os.path.exists(GOOGLE_CREDENTIALS_FILE):
+        return service_account.Credentials.from_service_account_file(
+            GOOGLE_CREDENTIALS_FILE,
+            scopes=["https://www.googleapis.com/auth/spreadsheets"],
+        )
+    raise RuntimeError(
+        "Không tìm thấy Google credentials. Đặt biến môi trường GOOGLE_CREDENTIALS_JSON "
+        "(dán nguyên nội dung file service_account.json) hoặc file "
+        f"'{GOOGLE_CREDENTIALS_FILE}'. Xem README.md để thiết lập."
+    )
+
+
 def _sheet_has_header(service, sheet_id: str, sheet_tab: str) -> bool:
     result = (
         service.spreadsheets()
@@ -143,24 +180,9 @@ def api_export():
         return jsonify({"error": "Thiếu Google Sheet ID."}), 400
     if not rows:
         return jsonify({"error": "Không có dữ liệu để xuất."}), 400
-    if not os.path.exists(GOOGLE_CREDENTIALS_FILE):
-        return (
-            jsonify(
-                {
-                    "error": (
-                        f"Không tìm thấy file credentials tại '{GOOGLE_CREDENTIALS_FILE}'. "
-                        "Xem README.md để thiết lập Google Service Account."
-                    )
-                }
-            ),
-            500,
-        )
 
     try:
-        creds = service_account.Credentials.from_service_account_file(
-            GOOGLE_CREDENTIALS_FILE,
-            scopes=["https://www.googleapis.com/auth/spreadsheets"],
-        )
+        creds = _load_google_credentials()
         service = build("sheets", "v4", credentials=creds)
 
         if not _sheet_has_header(service, sheet_id, sheet_tab):

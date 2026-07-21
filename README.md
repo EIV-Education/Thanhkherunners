@@ -42,7 +42,7 @@ cp .env.example .env
 > Lưu ý: file `credentials/service_account.json` và `.env` chứa thông tin nhạy cảm,
 > đã được đưa vào `.gitignore` — không commit lên GitHub.
 
-## 4. Chạy ứng dụng
+## 4. Chạy ứng dụng (local)
 
 ```bash
 python app.py
@@ -50,7 +50,31 @@ python app.py
 
 Mở trình duyệt tại http://localhost:5000
 
-## 5. Sử dụng
+## 5. Deploy lên Vercel
+
+Project đã có sẵn `vercel.json` + `api/index.py` để chạy dưới dạng Serverless Function.
+
+1. Đẩy repo này lên GitHub (đã có), vào https://vercel.com → **Add New → Project** → import repo.
+2. Vercel tự nhận diện Python từ `requirements.txt`, không cần chỉnh Build/Output settings.
+3. Vào **Project → Settings → Environment Variables**, thêm các biến sau (bắt buộc phải khai báo
+   ở đây — file `.env` trên máy của bạn **không** được Vercel đọc):
+
+   | Tên biến | Giá trị |
+   |---|---|
+   | `GEMINI_API_KEY` | API key lấy ở bước 2 |
+   | `GEMINI_MODEL` | (tùy chọn) `gemini-2.5-flash` hoặc `gemini-2.5-pro` |
+   | `GOOGLE_CREDENTIALS_JSON` | Dán **nguyên nội dung** file `service_account.json` (cả file, không phải đường dẫn) — Vercel không cho ghi file lên đĩa nên không dùng `GOOGLE_CREDENTIALS_FILE` được |
+   | `GOOGLE_SHEET_ID` | (tùy chọn) ID Google Sheet mặc định |
+   | `GOOGLE_SHEET_TAB` | (tùy chọn) mặc định `Sheet1` |
+
+4. Bấm **Deploy** (hoặc **Redeploy** nếu project đã tồn tại — cần redeploy sau khi thêm biến môi trường
+   để chúng có hiệu lực).
+
+> ⚠️ Vercel giới hạn dung lượng body request (mặc định khoảng 4.5MB/request trên gói Hobby/Pro).
+> Nếu tải lên nhiều ảnh hoặc ảnh chụp gốc quá nặng cùng lúc có thể bị lỗi 413 — nên nén/resize ảnh
+> hoặc tải lên từng đợt ít ảnh hơn khi dùng bản deploy trên Vercel.
+
+## 6. Sử dụng
 
 1. Kéo-thả (hoặc chọn) nhiều ảnh finisher certificate vào ô upload.
 2. Bấm **Trích xuất dữ liệu** — Gemini sẽ đọc từng ảnh và điền vào bảng kết quả
@@ -65,12 +89,14 @@ Mở trình duyệt tại http://localhost:5000
 
 ```
 app.py              # Flask backend: trích xuất ảnh (Gemini) + ghi Google Sheet
+api/index.py          # Entry point cho Vercel Serverless Function (re-export app từ app.py)
+vercel.json           # Cấu hình routing cho Vercel
 templates/index.html
 static/style.css
 static/script.js
 static/images/       # Đặt file logo/ảnh bìa (cover.jpg) vào đây
-credentials/         # Đặt service_account.json vào đây (gitignored)
-.env                  # Biến môi trường (gitignored)
+credentials/         # Đặt service_account.json vào đây khi chạy local (gitignored)
+.env                  # Biến môi trường khi chạy local (gitignored)
 ```
 
 ## Ghi chú
