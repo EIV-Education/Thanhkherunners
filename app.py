@@ -125,9 +125,23 @@ def normalize_distance(raw: str):
     return (f"other_{low}", text, 0.0)
 
 
+_SHEET_TIME_ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T(\d{2}:\d{2}:\d{2})")
+
+
+def clean_finish_time(raw: str) -> str:
+    """Google Sheets đôi khi tự nhận diện chip time (vd "20:51:00") là 1 giá trị Time và lưu
+    thành ngày epoch 1899-12-30 - lúc đó Apps Script trả về chuỗi kiểu
+    "1899-12-29T20:51:00.000Z" thay vì "20:51:00". Hàm này bóc lại đúng phần giờ:phút:giây."""
+    text = (raw or "").strip()
+    match = _SHEET_TIME_ISO_RE.match(text)
+    if match:
+        return match.group(1)
+    return text
+
+
 def time_to_seconds(raw: str):
     """Chuyển chuỗi thời gian dạng HH:MM:SS hoặc MM:SS thành số giây để so sánh, xếp hạng."""
-    text = (raw or "").strip()
+    text = clean_finish_time(raw)
     if not text:
         return None
     parts = text.split(":")
@@ -175,13 +189,14 @@ def build_leaderboard(rows: list) -> list:
         if not normalized:
             continue
         key, label, km = normalized
+        finish_time = clean_finish_time(row.get("finish_time"))
         group = groups.setdefault(key, {"key": key, "label": label, "km": km, "entries": []})
         group["entries"].append(
             {
                 "full_name": row.get("full_name", ""),
-                "finish_time": row.get("finish_time", ""),
+                "finish_time": finish_time,
                 "race_name": row.get("race_name", ""),
-                "_seconds": time_to_seconds(row.get("finish_time")),
+                "_seconds": time_to_seconds(finish_time),
             }
         )
 

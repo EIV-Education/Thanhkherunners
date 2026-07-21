@@ -113,7 +113,7 @@ function doGet(e) {
           timestamp: r[0] ? String(r[0]) : "",
           full_name: r[1] || "",
           distance: r[2] || "",
-          finish_time: r[3] || "",
+          finish_time: formatFinishTime(r[3]),
           race_name: r[4] || "",
           image_url: r[5] || "",
         };
@@ -126,6 +126,17 @@ function doGet(e) {
   } catch (err) {
     return jsonOutput({ error: String(err) });
   }
+}
+
+// Cột "Thời gian hoàn thành" (chip time) đôi khi bị Google Sheets tự nhận diện là 1 giá trị
+// Time và lưu thành object Date (ngày epoch 1899-12-30) thay vì giữ nguyên chuỗi "HH:MM:SS".
+// Khi đó JSON.stringify sẽ trả ra chuỗi kiểu "1899-12-29T20:51:00.000Z" rất khó hiểu - hàm này
+// phát hiện trường hợp đó và định dạng lại thành "HH:mm:ss" theo đúng chip time.
+function formatFinishTime(value) {
+  if (Object.prototype.toString.call(value) === "[object Date]") {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), "HH:mm:ss");
+  }
+  return value || "";
 }
 
 function saveImageToDrive(base64Data, mimeType, filename) {
