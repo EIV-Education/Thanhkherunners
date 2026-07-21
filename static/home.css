@@ -373,6 +373,16 @@ section.page {
   color: var(--ink-muted);
 }
 
+.schedule-note a {
+  color: var(--teal);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.schedule-note a:hover {
+  text-decoration: underline;
+}
+
 /* ---------- Hall of Fame ---------- */
 .hof-grid {
   display: grid;
