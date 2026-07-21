@@ -130,14 +130,17 @@ function doGet(e) {
 
 // Cột "Thời gian hoàn thành" (chip time) đôi khi bị Google Sheets tự nhận diện là 1 giá trị
 // Time và lưu thành object Date (ngày epoch giả 1899-12-30) thay vì giữ nguyên chuỗi "HH:MM:SS".
-// Ngày epoch giả này rơi vào trước năm 1906 nên timezone Việt Nam (Asia/Ho_Chi_Minh) áp dụng quy
-// tắc lịch sử "Local Mean Time" (lệch +07:06:xx thay vì +07:00 chẵn) - nếu format theo timezone
-// đó sẽ ra giờ SAI lệch vài phút so với chip time gốc. Giá trị Date mà Apps Script tạo ra từ ô
-// Time luôn được tính theo UTC (không phụ thuộc timezone của Sheet/script), nên phải đọc theo
-// UTC (Etc/GMT, không áp quy tắc lịch sử/DST nào) mới ra đúng đúng "HH:mm:ss" đã nhập ban đầu.
+// Giá trị Date đó lưu đúng giờ đã nhập nhưng theo UTC+0 (vd nhập "03:29:27" thì Date lưu UTC
+// "20:29:27" hôm trước - lệch đúng 7 tiếng, tức giờ Việt Nam UTC+7). Format theo tên timezone
+// "Asia/Ho_Chi_Minh" bị SAI vì ngày epoch giả 1899 rơi trước năm 1906, khi đó Google áp quy tắc
+// lịch sử "Local Mean Time" (lệch +07:06:xx lẻ, không phải +07:00 chẵn) thay vì offset hiện tại,
+// làm giờ bị lệch vài phút không cố định. Format theo UTC thuần (Etc/GMT) thì lại thiếu mất 7
+// tiếng cộng thêm. Dùng "Etc/GMT-7" (lưu ý ký hiệu Etc/GMT bị đảo dấu theo chuẩn POSIX, nên
+// "GMT-7" ở đây thực chất là UTC+7) để có offset Việt Nam cố định, không dính bất kỳ quy tắc
+// lịch sử/DST nào, mới ra đúng "HH:mm:ss" đã nhập ban đầu.
 function formatFinishTime(value) {
   if (Object.prototype.toString.call(value) === "[object Date]") {
-    return Utilities.formatDate(value, "Etc/GMT", "HH:mm:ss");
+    return Utilities.formatDate(value, "Etc/GMT-7", "HH:mm:ss");
   }
   return value || "";
 }
