@@ -7,6 +7,7 @@ const resultsSection = document.getElementById("results-section");
 const resultsBody = document.getElementById("results-body");
 const exportBtn = document.getElementById("export-btn");
 const exportStatus = document.getElementById("export-status");
+const extractErrors = document.getElementById("extract-errors");
 const scriptUrlInput = document.getElementById("script-url");
 const sheetTabInput = document.getElementById("sheet-tab");
 
@@ -104,6 +105,8 @@ extractBtn.addEventListener("click", async () => {
   extractBtn.disabled = true;
   extractStatus.textContent = `Đang trích xuất ${pendingFiles.length} ảnh...`;
   extractStatus.className = "status";
+  extractErrors.hidden = true;
+  extractErrors.innerHTML = "";
 
   const formData = new FormData();
   pendingFiles.forEach((file) => formData.append("images", file));
@@ -115,6 +118,7 @@ extractBtn.addEventListener("click", async () => {
     if (!res.ok) {
       extractStatus.textContent = data.error || "Có lỗi xảy ra khi trích xuất.";
       extractStatus.className = "status error";
+      renderExtractErrors(data.errors || []);
       extractBtn.disabled = false;
       return;
     }
@@ -127,9 +131,9 @@ extractBtn.addEventListener("click", async () => {
 
     const errorCount = (data.errors || []).length;
     if (errorCount > 0) {
-      const names = data.errors.map((e) => e.filename).join(", ");
-      extractStatus.textContent = `Xong. ${data.results.length} ảnh thành công, ${errorCount} ảnh lỗi (${names}).`;
+      extractStatus.textContent = `Xong. ${data.results.length} ảnh thành công, ${errorCount} ảnh lỗi (xem chi tiết bên dưới).`;
       extractStatus.className = "status error";
+      renderExtractErrors(data.errors);
     } else {
       extractStatus.textContent = `Đã trích xuất xong ${data.results.length} ảnh.`;
       extractStatus.className = "status success";
@@ -144,6 +148,20 @@ extractBtn.addEventListener("click", async () => {
     extractBtn.disabled = pendingFiles.length === 0;
   }
 });
+
+function renderExtractErrors(errors) {
+  extractErrors.innerHTML = "";
+  if (!errors || errors.length === 0) {
+    extractErrors.hidden = true;
+    return;
+  }
+  errors.forEach((e) => {
+    const li = document.createElement("li");
+    li.textContent = `${e.filename || "(không rõ tên file)"}: ${e.error || "Lỗi không xác định"}`;
+    extractErrors.appendChild(li);
+  });
+  extractErrors.hidden = false;
+}
 
 exportBtn.addEventListener("click", async () => {
   const rows = [];
