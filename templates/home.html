@@ -14,6 +14,7 @@
     </a>
     <ul class="nav-links">
       <li><a href="#top" class="active">Trang chủ</a></li>
+      <li><a href="#lich-tap">Lịch tập</a></li>
       <li><a href="#core-team">Core Team</a></li>
       <li><a href="#vinh-danh">Bảng vinh danh</a></li>
       <li><a href="#gioi-thieu">Giới thiệu</a></li>
@@ -41,6 +42,32 @@
   </header>
 
   <div class="bunting" id="bunting" aria-hidden="true"></div>
+
+  <section class="page schedule" id="lich-tap">
+    <div class="section-head">
+      <p class="eyebrow">Lịch tập luyện</p>
+      <h2 class="display">Tập cùng nhau mỗi tuần</h2>
+      <p>“Chạy là đam mê — đồng đội là sức mạnh”. Ba buổi tập cố định mỗi tuần, mọi trình độ đều tham gia được.</p>
+    </div>
+    <div class="schedule-grid">
+      <div class="schedule-card">
+        <div class="schedule-day">Thứ 3</div>
+        <div class="schedule-time mono">17:45</div>
+        <div class="schedule-type">Runday</div>
+      </div>
+      <div class="schedule-card">
+        <div class="schedule-day">Thứ 5</div>
+        <div class="schedule-time mono">17:45</div>
+        <div class="schedule-type">Training</div>
+      </div>
+      <div class="schedule-card featured">
+        <div class="schedule-day">Chủ nhật</div>
+        <div class="schedule-time mono">04:30</div>
+        <div class="schedule-type">Long Run</div>
+      </div>
+    </div>
+    <p class="schedule-note">Điểm tập trung: xem QR trên standee CLB tại điểm tập, hoặc hỏi trong nhóm Facebook Thanh Khê Runners.</p>
+  </section>
 
   <section class="page dark-block" id="core-team">
     <div class="section-head">
@@ -158,6 +185,7 @@
     <div class="foot-brand display">THANH KHÊ RUNNERS</div>
     <div class="foot-links">
       <a href="#top">Trang chủ</a>
+      <a href="#lich-tap">Lịch tập</a>
       <a href="#vinh-danh">Bảng vinh danh</a>
       <a href="#gioi-thieu">Giới thiệu</a>
       <a href="{{ url_for('index') }}">Nộp thành tích</a>

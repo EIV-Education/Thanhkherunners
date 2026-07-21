@@ -314,6 +314,65 @@ section.page {
   margin: 0;
 }
 
+/* ---------- Schedule (lịch tập luyện) ---------- */
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.4rem;
+}
+
+@media (max-width: 700px) {
+  .schedule-grid { grid-template-columns: 1fr; }
+}
+
+.schedule-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 1.8rem 1.4rem;
+  text-align: center;
+}
+
+.schedule-card.featured {
+  border-color: var(--orange);
+  background: linear-gradient(160deg, var(--surface), color-mix(in srgb, var(--orange) 10%, var(--surface)));
+}
+
+.schedule-day {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.schedule-time {
+  font-family: "Arial Black", sans-serif;
+  font-weight: 900;
+  font-size: 2.4rem;
+  color: var(--teal);
+  margin: 0.3rem 0;
+}
+
+.schedule-card.featured .schedule-time {
+  color: var(--orange);
+}
+
+.schedule-type {
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.schedule-note {
+  margin: 1.8rem 0 0;
+  text-align: center;
+  font-size: 0.84rem;
+  color: var(--ink-muted);
+}
+
 /* ---------- Hall of Fame ---------- */
 .hof-grid {
   display: grid;
