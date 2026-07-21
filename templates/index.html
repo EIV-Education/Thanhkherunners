@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trích xuất Finisher Certificate</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <header>
+    <h1>🏃 Trích xuất Finisher Certificate</h1>
+    <p class="subtitle">Kéo-thả ảnh chứng nhận hoàn thành → tự động đọc họ tên, cự ly, thành tích, giải chạy → xuất ra Google Sheet.</p>
+  </header>
+
+  <main>
+    <section id="drop-zone" class="drop-zone">
+      <p>Kéo-thả ảnh vào đây, hoặc</p>
+      <label for="file-input" class="btn">Chọn ảnh</label>
+      <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden />
+      <p class="hint">Hỗ trợ PNG / JPEG / WEBP / GIF, tối đa 20MB/ảnh</p>
+    </section>
+
+    <section id="pending-list" class="pending-list"></section>
+
+    <div class="actions-row">
+      <button id="extract-btn" class="btn primary" disabled>Trích xuất dữ liệu</button>
+      <span id="extract-status" class="status"></span>
+    </div>
+
+    <section id="results-section" class="results-section" hidden>
+      <h2>Kết quả trích xuất</h2>
+      <p class="hint">Kiểm tra và sửa lại thông tin nếu cần trước khi xuất ra Google Sheet.</p>
+      <div class="table-wrap">
+        <table id="results-table">
+          <thead>
+            <tr>
+              <th>Ảnh</th>
+              <th>Họ tên</th>
+              <th>Cự ly</th>
+              <th>Thành tích</th>
+              <th>Giải chạy</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="export-row">
+        <label>
+          Google Sheet ID
+          <input type="text" id="sheet-id" placeholder="1AbC...xyz" value="{{ default_sheet_id }}" />
+        </label>
+        <label>
+          Tên tab
+          <input type="text" id="sheet-tab" placeholder="Sheet1" value="{{ default_sheet_tab }}" />
+        </label>
+        <button id="export-btn" class="btn primary">Xuất ra Google Sheet</button>
+        <span id="export-status" class="status"></span>
+      </div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
