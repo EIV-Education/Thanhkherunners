@@ -70,6 +70,55 @@ Project đã có sẵn `vercel.json` + `api/index.py` để chạy dưới dạn
 4. Bấm **Deploy** (hoặc **Redeploy** nếu project đã tồn tại — cần redeploy sau khi thêm biến môi trường
    để chúng có hiệu lực).
 
+### Hướng dẫn chi tiết cho `GOOGLE_CREDENTIALS_JSON`
+
+Đây là biến hay bị làm sai nhất vì phải copy nguyên một file JSON vào 1 ô trên web, nên làm theo
+từng bước sau:
+
+1. **Lấy file `service_account.json`** — nếu chưa có, làm mục 3 ở trên trước để tải file này về máy.
+   File có dạng:
+   ```json
+   {
+     "type": "service_account",
+     "project_id": "ten-project-cua-ban",
+     "private_key_id": "abc123...",
+     "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQ...\n-----END PRIVATE KEY-----\n",
+     "client_email": "finisher-cert-bot@ten-project.iam.gserviceaccount.com",
+     "client_id": "1234567890",
+     ...
+   }
+   ```
+2. **Mở file đó bằng trình soạn thảo văn bản thuần** (Notepad, VS Code, TextEdit — **không** dùng
+   Word/Google Docs vì có thể tự đổi dấu ngoặc kép cong `“ ”` làm hỏng JSON).
+3. **Chọn toàn bộ nội dung** (Ctrl+A hoặc Cmd+A) rồi **copy** (Ctrl+C / Cmd+C).
+   - Copy **y nguyên**, từ dấu `{` đầu tiên đến dấu `}` cuối cùng.
+   - **Không** xóa hay sửa các ký tự `\n` bên trong `private_key` — đó là một phần bắt buộc của khóa.
+   - **Không** cần nén thành 1 dòng, không cần thêm dấu nháy bao ngoài — dán y hệt nội dung file.
+4. Vào **Vercel Dashboard → chọn đúng project → Settings → Environment Variables**.
+5. Ô **Key**: gõ chính xác `GOOGLE_CREDENTIALS_JSON` (viết hoa, đúng dấu gạch dưới).
+6. Ô **Value**: dán (Ctrl+V / Cmd+V) toàn bộ nội dung vừa copy vào — ô này chấp nhận nhiều dòng,
+   kể cả xuống dòng, dán thoải mái.
+7. Ở phần **Environment**: tick chọn **Production** (và **Preview**, **Development** nếu bạn cũng
+   test ở các môi trường đó).
+8. Bấm **Save**.
+9. **Bắt buộc phải Redeploy lại** sau khi lưu biến môi trường (thêm biến không tự áp dụng cho bản
+   deploy đang chạy): vào tab **Deployments** → bấm nút **⋯** ở bản deploy mới nhất → **Redeploy**.
+
+**Cách kiểm tra file JSON hợp lệ trước khi dán** (nếu không chắc file có bị lỗi định dạng không),
+chạy lệnh sau trên máy (đã cài Python):
+```bash
+python3 -c "import json; json.load(open('service_account.json')); print('File JSON hợp lệ')"
+```
+Nếu lệnh báo lỗi (`json.decoder.JSONDecodeError`), tức là file gốc đã bị hỏng — tải lại file JSON mới
+từ Google Cloud Console (mục 3, bước 4) rồi làm lại từ đầu, đừng sửa tay file cũ.
+
+**Lỗi thường gặp:**
+- Dán thiếu dấu `{` hoặc `}` ở đầu/cuối do bôi đen sót → xuất ra Google Sheet báo lỗi parse JSON.
+- Dán nội dung đã qua Word/Google Docs làm đổi `"` thành `“`/`”` → cũng lỗi parse JSON.
+- Quên bấm Redeploy sau khi lưu biến → app vẫn dùng bản cũ, lỗi y như trước.
+- Quên **Share Google Sheet** cho email trong `client_email` (mục 3, bước 6-7) → báo lỗi quyền
+  truy cập (403 permission denied) dù JSON đã đúng.
+
 > ⚠️ Vercel giới hạn dung lượng body request (mặc định khoảng 4.5MB/request trên gói Hobby/Pro).
 > Nếu tải lên nhiều ảnh hoặc ảnh chụp gốc quá nặng cùng lúc có thể bị lỗi 413 — nên nén/resize ảnh
 > hoặc tải lên từng đợt ít ảnh hơn khi dùng bản deploy trên Vercel.
