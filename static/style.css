@@ -255,3 +255,12 @@ td input:focus {
   width: 100%;
   min-width: 260px;
 }
+
+.site-credit {
+  max-width: 900px;
+  margin: 2rem auto 0;
+  padding: 1rem 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
