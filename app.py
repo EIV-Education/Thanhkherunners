@@ -181,8 +181,10 @@ def fetch_sheet_rows() -> list:
 
 
 def build_leaderboard(rows: list) -> list:
-    """Gộp các dòng thành tích theo cự ly, xếp hạng nhanh → chậm trong từng cự ly,
-    rồi sắp các bảng cự ly theo thứ tự xa → gần (full marathon trước, 5K sau)."""
+    """Gộp các dòng thành tích theo cự ly; nếu cùng 1 runner (trùng họ tên, không phân biệt
+    hoa/thường) nộp nhiều lần trong cùng cự ly thì chỉ giữ lại thành tích nhanh nhất, rồi xếp
+    hạng nhanh → chậm trong từng cự ly, sắp các bảng cự ly theo thứ tự xa → gần (full marathon
+    trước, 5K sau)."""
     groups = {}
     for row in rows:
         normalized = normalize_distance(row.get("distance"))
@@ -202,6 +204,19 @@ def build_leaderboard(rows: list) -> list:
 
     categories = []
     for group in groups.values():
+        best_by_name = {}
+        for entry in group["entries"]:
+            name_key = (entry["full_name"] or "").strip().lower()
+            current = best_by_name.get(name_key)
+            if current is None:
+                best_by_name[name_key] = entry
+                continue
+            cur_seconds = current["_seconds"]
+            new_seconds = entry["_seconds"]
+            if new_seconds is not None and (cur_seconds is None or new_seconds < cur_seconds):
+                best_by_name[name_key] = entry
+        group["entries"] = list(best_by_name.values())
+
         group["entries"].sort(key=lambda e: (e["_seconds"] is None, e["_seconds"]))
         for idx, entry in enumerate(group["entries"], start=1):
             entry["rank"] = idx

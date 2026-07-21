@@ -145,6 +145,10 @@ Project đã có sẵn `vercel.json` + `api/index.py` để chạy dưới dạn
 - Trang chủ gọi `doGet` trong `Code.gs` để lấy toàn bộ dữ liệu hiện có trên Sheet.
 - Cột **Cự ly** được gom nhóm theo từ khoá: chứa "full"/"42" → Full Marathon, "half"/"21" →
   Half Marathon, "10" → 10K, "5" → 5K; cự ly khác giữ nguyên tên gốc thành 1 bảng riêng.
+- Nếu cùng 1 người (trùng họ tên, không phân biệt hoa/thường) nộp nhiều dòng trong cùng 1 bảng
+  cự ly (vd nộp nhầm nhiều lần, hoặc chạy nhiều giải cùng cự ly đó), chỉ dòng có **thành tích
+  nhanh nhất** được giữ lại trong bảng vinh danh — các dòng chậm hơn bị ẩn khỏi bảng (vẫn còn
+  nguyên trên Sheet, không bị xoá).
 - Trong mỗi bảng, runner được xếp theo **Thời gian hoàn thành** từ nhanh đến chậm (dòng không đọc
   được thời gian hợp lệ sẽ xếp cuối bảng thay vì bị loại bỏ).
 - Các bảng cự ly được sắp theo cự ly xa → gần (Full Marathon trước, 5K sau).
