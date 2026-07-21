@@ -18,9 +18,9 @@
       <li><a href="#core-team">Core Team</a></li>
       <li><a href="#vinh-danh">Bảng vinh danh</a></li>
       <li><a href="#gioi-thieu">Giới thiệu</a></li>
-      <li><a href="{{ url_for('index') }}">Nộp thành tích</a></li>
+      <li><a href="{{ url_for('index') }}" target="_blank" rel="noopener">Nộp thành tích</a></li>
     </ul>
-    <a class="nav-cta" href="{{ url_for('index') }}">Nộp thành tích →</a>
+    <a class="nav-cta" href="{{ url_for('index') }}" target="_blank" rel="noopener">Nộp thành tích →</a>
   </nav>
   <div class="flag-stripe"></div>
 
@@ -29,7 +29,7 @@
       <h1 class="display">Chạy là đam mê<br /><em>đồng đội là sức mạnh</em></h1>
       <p class="lede">Nơi lưu lại từng cột mốc của các thành viên Thanh Khê Runners — nộp chứng nhận hoàn thành, hệ thống tự đọc kết quả và xếp bạn vào đúng bảng vinh danh theo cự ly.</p>
       <div class="hero-actions">
-        <a class="btn btn-solid" href="{{ url_for('index') }}">Nộp thành tích mới</a>
+        <a class="btn btn-solid" href="{{ url_for('index') }}" target="_blank" rel="noopener">Nộp thành tích mới</a>
         <a class="btn btn-outline" href="#vinh-danh">Xem bảng vinh danh</a>
       </div>
     </div>
@@ -127,7 +127,7 @@
     </div>
     {% else %}
     <div class="hof-card">
-      <div class="hof-empty">Chưa có thành tích nào được nộp. Hãy là người đầu tiên ghi danh vào bảng vinh danh! <a href="{{ url_for('index') }}">Nộp thành tích ngay →</a></div>
+      <div class="hof-empty">Chưa có thành tích nào được nộp. Hãy là người đầu tiên ghi danh vào bảng vinh danh! <a href="{{ url_for('index') }}" target="_blank" rel="noopener">Nộp thành tích ngay →</a></div>
     </div>
     {% endif %}
   </section>
@@ -168,7 +168,7 @@
         <p class="eyebrow">Công cụ trích xuất</p>
         <h2 class="display">Vừa về đích? Nộp chứng nhận ngay</h2>
         <p>Kéo-thả ảnh finisher certificate — hệ thống tự đọc họ tên, cự ly, thành tích, tên giải, bạn chỉ cần xác nhận là xong. Kết quả sẽ tự động xếp vào đúng bảng vinh danh theo cự ly.</p>
-        <a class="btn" href="{{ url_for('index') }}">Mở công cụ trích xuất →</a>
+        <a class="btn" href="{{ url_for('index') }}" target="_blank" rel="noopener">Mở công cụ trích xuất →</a>
       </div>
       <div class="tool-preview">
         <div class="mock-drop">
@@ -188,7 +188,7 @@
       <a href="#lich-tap">Lịch tập</a>
       <a href="#vinh-danh">Bảng vinh danh</a>
       <a href="#gioi-thieu">Giới thiệu</a>
-      <a href="{{ url_for('index') }}">Nộp thành tích</a>
+      <a href="{{ url_for('index') }}" target="_blank" rel="noopener">Nộp thành tích</a>
     </div>
     <div class="credit">Powered by ANH NGUYỄN</div>
   </footer>
