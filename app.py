@@ -13,7 +13,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-latest")
 GOOGLE_SCRIPT_URL = os.environ.get("GOOGLE_SCRIPT_URL", "")
 GOOGLE_SCRIPT_SECRET = os.environ.get("GOOGLE_SCRIPT_SECRET", "")
 GOOGLE_SHEET_TAB = os.environ.get("GOOGLE_SHEET_TAB", "")
@@ -76,6 +76,18 @@ def extract_from_image(filename: str, image_bytes: bytes, media_type: str) -> di
     return data
 
 
+def _friendly_gemini_error(exc: Exception) -> str:
+    text = str(exc)
+    if "NOT_FOUND" in text and "model" in text.lower():
+        return (
+            f"Model '{GEMINI_MODEL}' không còn được hỗ trợ hoặc không tồn tại. Đặt biến môi "
+            "trường GEMINI_MODEL sang model đang hoạt động (ví dụ 'gemini-flash-latest' hoặc "
+            "'gemini-pro-latest') - xem danh sách model hiện có tại "
+            f"https://ai.google.dev/gemini-api/docs/models. Chi tiết lỗi gốc: {text}"
+        )
+    return text
+
+
 @app.route("/")
 def index():
     return render_template(
@@ -127,7 +139,7 @@ def api_extract():
             try:
                 results.append(future.result())
             except Exception as exc:  # noqa: BLE001 - surface any extraction failure to the UI
-                errors.append({"filename": name, "error": str(exc)})
+                errors.append({"filename": name, "error": _friendly_gemini_error(exc)})
 
     return jsonify({"results": results, "errors": errors})
 

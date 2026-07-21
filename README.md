@@ -76,7 +76,7 @@ Project đã có sẵn `vercel.json` + `api/index.py` để chạy dưới dạn
    | Tên biến | Giá trị |
    |---|---|
    | `GEMINI_API_KEY` | API key lấy ở bước 2 |
-   | `GEMINI_MODEL` | (tùy chọn) `gemini-2.5-flash` hoặc `gemini-2.5-pro` |
+   | `GEMINI_MODEL` | (tùy chọn) mặc định `gemini-flash-latest`, đổi sang `gemini-pro-latest` để chính xác hơn |
    | `GOOGLE_SCRIPT_URL` | Link Web App lấy ở bước 3.10 |
    | `GOOGLE_SCRIPT_SECRET` | (tùy chọn) trùng với `SECRET` đặt trong `Code.gs` nếu có |
    | `GOOGLE_SHEET_TAB` | (tùy chọn) tên tab mặc định, để trống = tab đang mở |
@@ -115,8 +115,12 @@ static/images/             # Đặt file logo/ảnh bìa (cover.jpg) vào đây
 
 ## Ghi chú
 
-- Model mặc định là `gemini-2.5-flash`. Có thể đổi sang `gemini-2.5-pro` để chính xác hơn
-  (nhưng chậm/đắt hơn) bằng biến `GEMINI_MODEL` trong `.env`.
+- Model mặc định là `gemini-flash-latest` (alias luôn trỏ tới bản flash mới nhất của Google,
+  tránh lỗi 404 khi Google ngừng hỗ trợ 1 phiên bản cụ thể). Có thể đổi sang `gemini-pro-latest`
+  để chính xác hơn (nhưng chậm/đắt hơn) bằng biến `GEMINI_MODEL` trong `.env`.
+- Nếu gặp lỗi dạng `404 NOT_FOUND ... is no longer available`: model đang dùng đã bị Google
+  ngừng hỗ trợ, đổi giá trị `GEMINI_MODEL` sang model còn hoạt động — xem danh sách tại
+  https://ai.google.dev/gemini-api/docs/models.
 - Giới hạn 20MB/ảnh, hỗ trợ định dạng PNG/JPEG/WEBP/GIF.
 - Mỗi lần trích xuất chạy tối đa 5 ảnh song song để tăng tốc độ.
 - Ảnh bìa (logo/banner) ở đầu trang: đặt file ảnh vào `static/images/cover.jpg`
