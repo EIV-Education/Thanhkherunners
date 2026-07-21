@@ -90,16 +90,16 @@ def _friendly_gemini_error(exc: Exception) -> str:
 
 
 CORE_TEAM = [
-    {"name": "Phạm Đình Tuấn", "initials": "PT", "gradient": ("var(--orange)", "var(--teal-bright)")},
-    {"name": "Nguyễn Văn Anh", "initials": "NA", "gradient": ("var(--teal-bright)", "var(--flag-gold)")},
-    {"name": "Đàm Tường Quang", "initials": "ĐQ", "gradient": ("var(--flag-gold)", "var(--orange)")},
-    {"name": "Huỳnh Trung Phúc", "initials": "HP", "gradient": ("var(--orange)", "var(--flag-gold)")},
-    {"name": "Cao Văn Tâm", "initials": "CT", "gradient": ("var(--teal-bright)", "var(--orange)")},
-    {"name": "Nguyễn Dương Hiếu", "initials": "NH", "gradient": ("var(--flag-gold)", "var(--teal-bright)")},
-    {"name": "Đỗ Hoàng Nhật", "initials": "ĐN", "gradient": ("var(--orange)", "var(--teal-bright)")},
-    {"name": "Lê Công Sanh", "initials": "LS", "gradient": ("var(--teal-bright)", "var(--flag-gold)")},
-    {"name": "Hoàng Nguyễn Lê Sinh", "initials": "HS", "gradient": ("var(--flag-gold)", "var(--orange)")},
-    {"name": "Phan Quốc Việt", "initials": "PV", "gradient": ("var(--orange)", "var(--flag-gold)")},
+    {"name": "Phạm Đình Tuấn", "initials": "PT", "gradient": ("var(--orange)", "var(--teal-bright)"), "photo": None},
+    {"name": "Nguyễn Văn Anh", "initials": "NA", "gradient": ("var(--teal-bright)", "var(--flag-gold)"), "photo": None},
+    {"name": "Đàm Tường Quang", "initials": "ĐQ", "gradient": ("var(--flag-gold)", "var(--orange)"), "photo": None},
+    {"name": "Huỳnh Trung Phúc", "initials": "HP", "gradient": ("var(--orange)", "var(--flag-gold)"), "photo": None},
+    {"name": "Cao Văn Tâm", "initials": "CT", "gradient": ("var(--teal-bright)", "var(--orange)"), "photo": None},
+    {"name": "Nguyễn Dương Hiếu", "initials": "NH", "gradient": ("var(--flag-gold)", "var(--teal-bright)"), "photo": None},
+    {"name": "Đỗ Hoàng Nhật", "initials": "ĐN", "gradient": ("var(--orange)", "var(--teal-bright)"), "photo": None},
+    {"name": "Lê Công Sanh", "initials": "LS", "gradient": ("var(--teal-bright)", "var(--flag-gold)"), "photo": None},
+    {"name": "Hoàng Nguyễn Lê Sinh", "initials": "HS", "gradient": ("var(--flag-gold)", "var(--orange)"), "photo": "core-team/hoang-nguyen-le-sinh.jpg"},
+    {"name": "Phan Quốc Việt", "initials": "PV", "gradient": ("var(--orange)", "var(--flag-gold)"), "photo": None},
 ]
 
 

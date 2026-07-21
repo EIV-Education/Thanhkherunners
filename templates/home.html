@@ -79,7 +79,11 @@
       {% for member in core_team %}
       <div class="core-card">
         <span class="core-num">{{ loop.index }}</span>
+        {% if member.photo %}
+        <img class="core-avatar core-avatar-photo" src="{{ url_for('static', filename='images/' + member.photo) }}" alt="{{ member.name }}" />
+        {% else %}
         <div class="core-avatar" style="background:linear-gradient(135deg, {{ member.gradient[0] }}, {{ member.gradient[1] }});">{{ member.initials }}</div>
+        {% endif %}
         <div class="core-name">{{ member.name }}</div>
       </div>
       {% endfor %}

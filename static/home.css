@@ -590,6 +590,13 @@ td.time { font-weight: 700; color: var(--teal); }
   font-family: "Arial Black", sans-serif;
 }
 
+.core-avatar-photo {
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+}
+
 .core-name {
   font-size: 0.82rem;
   font-weight: 700;
