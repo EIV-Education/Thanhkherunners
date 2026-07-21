@@ -3,7 +3,7 @@
 Web app trích xuất thông tin từ ảnh **finisher certificate** (chứng nhận hoàn thành giải chạy):
 họ tên, cự ly, thành tích (chip time), tên giải chạy — sau đó xuất ra Google Sheet.
 
-- Đọc ảnh bằng Claude Vision (Anthropic API), không cần layout cố định.
+- Đọc ảnh bằng Gemini Vision (Google AI API), không cần layout cố định.
 - Kéo-thả nhiều ảnh cùng lúc, xem trước và sửa tay kết quả trước khi xuất.
 - Xuất trực tiếp vào Google Sheet qua Google Sheets API.
 
@@ -16,10 +16,10 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-## 2. Lấy Anthropic API key
+## 2. Lấy Gemini API key
 
-1. Vào https://console.anthropic.com/settings/keys và tạo API key.
-2. Mở `.env`, điền vào `ANTHROPIC_API_KEY=sk-ant-...`.
+1. Vào https://aistudio.google.com/apikey và tạo API key (miễn phí, dùng tài khoản Google).
+2. Mở `.env`, điền vào `GEMINI_API_KEY=...`.
 
 ## 3. Thiết lập Google Sheets API (Service Account)
 
@@ -53,9 +53,9 @@ Mở trình duyệt tại http://localhost:5000
 ## 5. Sử dụng
 
 1. Kéo-thả (hoặc chọn) nhiều ảnh finisher certificate vào ô upload.
-2. Bấm **Trích xuất dữ liệu** — Claude sẽ đọc từng ảnh và điền vào bảng kết quả
+2. Bấm **Trích xuất dữ liệu** — Gemini sẽ đọc từng ảnh và điền vào bảng kết quả
    (Họ tên / Cự ly / Thành tích / Giải chạy).
-3. Kiểm tra, sửa lại trực tiếp trong bảng nếu Claude đọc sai hoặc thiếu thông tin
+3. Kiểm tra, sửa lại trực tiếp trong bảng nếu Gemini đọc sai hoặc thiếu thông tin
    (ảnh mờ sẽ để trống thay vì bịa số liệu).
 4. Nhập/kiểm tra **Google Sheet ID** và **tên tab**, bấm **Xuất ra Google Sheet**.
    Dữ liệu sẽ được nối thêm (append) vào cuối sheet; nếu sheet đang trống, dòng tiêu đề
@@ -64,17 +64,20 @@ Mở trình duyệt tại http://localhost:5000
 ## Cấu trúc project
 
 ```
-app.py              # Flask backend: trích xuất ảnh (Claude) + ghi Google Sheet
+app.py              # Flask backend: trích xuất ảnh (Gemini) + ghi Google Sheet
 templates/index.html
 static/style.css
 static/script.js
+static/images/       # Đặt file logo/ảnh bìa (cover.jpg) vào đây
 credentials/         # Đặt service_account.json vào đây (gitignored)
 .env                  # Biến môi trường (gitignored)
 ```
 
 ## Ghi chú
 
-- Model mặc định là `claude-opus-4-8`. Có thể đổi sang model rẻ hơn (ví dụ `claude-sonnet-5`)
-  bằng biến `ANTHROPIC_MODEL` trong `.env` nếu xử lý số lượng ảnh lớn và muốn tiết kiệm chi phí.
+- Model mặc định là `gemini-2.5-flash`. Có thể đổi sang `gemini-2.5-pro` để chính xác hơn
+  (nhưng chậm/đắt hơn) bằng biến `GEMINI_MODEL` trong `.env`.
 - Giới hạn 20MB/ảnh, hỗ trợ định dạng PNG/JPEG/WEBP/GIF.
 - Mỗi lần trích xuất chạy tối đa 5 ảnh song song để tăng tốc độ.
+- Ảnh bìa (logo/banner) ở đầu trang: đặt file ảnh vào `static/images/cover.jpg`
+  (đè lên file placeholder nếu có) — giao diện sẽ tự hiển thị.

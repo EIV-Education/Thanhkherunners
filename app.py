@@ -1,19 +1,20 @@
-import base64
 import json
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import anthropic
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
+from google import genai
+from google.genai import types
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from pydantic import BaseModel
 
 load_dotenv()
 
 app = Flask(__name__)
 
-ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-opus-4-8")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 GOOGLE_CREDENTIALS_FILE = os.environ.get(
     "GOOGLE_CREDENTIALS_FILE", "credentials/service_account.json"
 )
@@ -25,31 +26,15 @@ ALLOWED_MIME_TYPES = {"image/png", "image/jpeg", "image/webp", "image/gif"}
 
 HEADER_ROW = ["Họ tên", "Cự ly", "Thành tích", "Giải chạy"]
 
-anthropic_client = anthropic.Anthropic()
+gemini_client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-EXTRACTION_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "full_name": {
-            "type": "string",
-            "description": "Họ và tên đầy đủ của người chạy in trên certificate. Chuỗi rỗng nếu không đọc được.",
-        },
-        "distance": {
-            "type": "string",
-            "description": "Cự ly thi đấu, ví dụ '5K', '10K', '21K', '42K', 'Half Marathon'. Chuỗi rỗng nếu không đọc được.",
-        },
-        "finish_time": {
-            "type": "string",
-            "description": "Thành tích / chip time / gun time, định dạng HH:MM:SS. Chuỗi rỗng nếu không đọc được.",
-        },
-        "race_name": {
-            "type": "string",
-            "description": "Tên giải chạy in trên certificate. Chuỗi rỗng nếu không đọc được.",
-        },
-    },
-    "required": ["full_name", "distance", "finish_time", "race_name"],
-    "additionalProperties": False,
-}
+
+class CertificateData(BaseModel):
+    full_name: str
+    distance: str
+    finish_time: str
+    race_name: str
+
 
 EXTRACTION_PROMPT = (
     "Đây là ảnh chụp finisher certificate (chứng nhận hoàn thành) của một giải chạy bộ. "
@@ -64,30 +49,19 @@ EXTRACTION_PROMPT = (
 
 
 def extract_from_image(filename: str, image_bytes: bytes, media_type: str) -> dict:
-    b64_data = base64.standard_b64encode(image_bytes).decode("utf-8")
-    response = anthropic_client.messages.create(
-        model=ANTHROPIC_MODEL,
-        max_tokens=1024,
-        output_config={"format": {"type": "json_schema", "schema": EXTRACTION_SCHEMA}},
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": media_type,
-                            "data": b64_data,
-                        },
-                    },
-                    {"type": "text", "text": EXTRACTION_PROMPT},
-                ],
-            }
+    response = gemini_client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=[
+            types.Part.from_bytes(data=image_bytes, mime_type=media_type),
+            EXTRACTION_PROMPT,
         ],
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=CertificateData,
+        ),
     )
-    text_block = next(block for block in response.content if block.type == "text")
-    data = json.loads(text_block.text)
+    parsed = response.parsed
+    data = parsed.model_dump() if parsed is not None else json.loads(response.text)
     data["filename"] = filename
     return data
 
