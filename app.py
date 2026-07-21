@@ -90,7 +90,7 @@ def _friendly_gemini_error(exc: Exception) -> str:
 
 
 CORE_TEAM = [
-    {"name": "Phạm Đình Tuấn", "initials": "PT", "gradient": ("var(--orange)", "var(--teal-bright)"), "photo": None},
+    {"name": "Phạm Đình Tuấn", "initials": "PT", "gradient": ("var(--orange)", "var(--teal-bright)"), "photo": "core-team/pham-dinh-tuan.jpg"},
     {"name": "Nguyễn Văn Anh", "initials": "NA", "gradient": ("var(--teal-bright)", "var(--flag-gold)"), "photo": "core-team/nguyen-van-anh.jpg"},
     {"name": "Đàm Tường Quang", "initials": "ĐQ", "gradient": ("var(--flag-gold)", "var(--orange)"), "photo": "core-team/dam-tuong-quang.jpg"},
     {"name": "Huỳnh Trung Phúc", "initials": "HP", "gradient": ("var(--orange)", "var(--flag-gold)"), "photo": None},
