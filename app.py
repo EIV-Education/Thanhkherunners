@@ -99,7 +99,7 @@ CORE_TEAM = [
     {"name": "Đỗ Hoàng Nhật", "initials": "ĐN", "gradient": ("var(--orange)", "var(--teal-bright)"), "photo": None},
     {"name": "Lê Công Sanh", "initials": "LS", "gradient": ("var(--teal-bright)", "var(--flag-gold)"), "photo": None},
     {"name": "Hoàng Nguyễn Lê Sinh", "initials": "HS", "gradient": ("var(--flag-gold)", "var(--orange)"), "photo": "core-team/hoang-nguyen-le-sinh.jpg"},
-    {"name": "Phan Quốc Việt", "initials": "PV", "gradient": ("var(--orange)", "var(--flag-gold)"), "photo": None},
+    {"name": "Phan Quốc Việt", "initials": "PV", "gradient": ("var(--orange)", "var(--flag-gold)"), "photo": "core-team/phan-quoc-viet.jpg"},
 ]
 
 
