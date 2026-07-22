@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thư viện ảnh & video - Thanh Khê Runners</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='gallery.css') }}" />
+</head>
+<body>
+  <header class="cover">
+    <img
+      src="{{ url_for('static', filename='images/cover.jpg') }}"
+      alt="Thanh Khê Runners"
+      class="cover-img"
+      onerror="this.style.display='none'; this.closest('.cover').classList.add('cover-fallback');"
+    />
+  </header>
+
+  <div class="page-title">
+    <a class="back-link" href="{{ url_for('home') }}">← Trang chủ</a>
+    <h1>📸 Thư viện ảnh & video CLB</h1>
+    <p class="subtitle">Chia sẻ khoảnh khắc luyện tập, thi đấu của bạn với cả CLB — kéo-thả hoặc chọn ảnh/video để tải lên.</p>
+  </div>
+
+  <main>
+    <section id="upload-zone" class="drop-zone">
+      <p>Kéo-thả ảnh/video vào đây, hoặc</p>
+      <label for="file-input" class="btn">Chọn ảnh/video</label>
+      <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/quicktime,video/webm" hidden />
+      <p class="hint">Hỗ trợ PNG / JPEG / WEBP / GIF / MP4 / MOV / WEBM, tối đa 20MB/file</p>
+      <div id="pending-file" class="pending-file" hidden></div>
+    </section>
+
+    <div class="upload-form" id="upload-form" hidden>
+      <label>
+        Tên của bạn
+        <input type="text" id="uploader-name" placeholder="Vd: Nguyễn Văn Anh" />
+      </label>
+      <label class="upload-form-wide">
+        Chú thích (tuỳ chọn)
+        <input type="text" id="uploader-caption" placeholder="Vd: Long run sáng Chủ nhật ở cầu Rồng" />
+      </label>
+      <div class="actions-row">
+        <button id="upload-btn" class="btn primary">Tải lên</button>
+        <span id="upload-status" class="status"></span>
+      </div>
+    </div>
+
+    <section class="gallery-section">
+      <h2>Đã chia sẻ ({{ items|length }})</h2>
+      {% if items %}
+      <div class="gallery-grid" id="gallery-grid">
+        {% for item in items %}
+        <figure class="gallery-item">
+          {% if item.media_type == 'video' %}
+          <iframe src="{{ item.media_url }}" loading="lazy" allow="autoplay" allowfullscreen></iframe>
+          {% else %}
+          <img src="{{ item.media_url }}" alt="{{ item.caption or 'Ảnh CLB Thanh Khê Runners' }}" loading="lazy" />
+          {% endif %}
+          <figcaption>
+            {% if item.caption %}<span class="gallery-caption">{{ item.caption }}</span>{% endif %}
+            <span class="gallery-uploader">{{ item.uploader_name or "Ẩn danh" }}</span>
+          </figcaption>
+        </figure>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="hint">Chưa có ảnh/video nào được chia sẻ. Hãy là người đầu tiên đóng góp!</p>
+      {% endif %}
+    </section>
+  </main>
+
+  <footer class="site-credit">Powered by ANH NGUYỄN</footer>
+
+  <script src="{{ url_for('static', filename='gallery.js') }}"></script>
+</body>
+</html>

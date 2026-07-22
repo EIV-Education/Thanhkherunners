@@ -2,9 +2,11 @@
  * Finisher Certificate Extractor — Google Apps Script Web App
  *
  * File này xử lý cả 2 chiều:
- * - doPost: nhận dữ liệu từ app, ghi vào Sheet + lưu ảnh certificate lên Drive.
+ * - doPost: nhận dữ liệu từ app, ghi vào Sheet + lưu ảnh certificate lên Drive; hoặc (nếu
+ *   action = "gallery_upload") nhận 1 ảnh/video cho Thư viện CLB, lưu vào Drive + tab "Gallery".
  * - doGet: trả toàn bộ dữ liệu trong Sheet dạng JSON, để app tự tính bảng vinh danh
- *   (xếp hạng theo cự ly) trên trang chủ.
+ *   (xếp hạng theo cự ly) trên trang chủ; hoặc (nếu action=gallery) trả danh sách ảnh/video
+ *   trong Thư viện CLB.
  *
  * Cách dùng:
  * 1. Mở Google Sheet muốn ghi dữ liệu vào.
@@ -45,12 +47,22 @@ var HEADER_ROW = ["Dấu thời gian", "Họ Tên Runners", "Cự ly", "Thời g
 // Tên folder trên Google Drive của bạn để lưu ảnh certificate. Nếu chưa có, script tự tạo mới.
 var DRIVE_FOLDER_NAME = "Finisher Certificates";
 
+// Thư viện ảnh/video CLB: tên tab riêng trên Sheet (tự tạo nếu chưa có) và tên folder Drive
+// riêng để lưu file (tách biệt khỏi ảnh certificate).
+var GALLERY_SHEET_TAB = "Gallery";
+var GALLERY_FOLDER_NAME = "TKR Gallery";
+var GALLERY_HEADER_ROW = ["Dấu thời gian", "Người đăng", "Chú thích", "Loại", "Link xem"];
+
 function doPost(e) {
   try {
     var payload = JSON.parse(e.postData.contents);
 
     if (SECRET && payload.secret !== SECRET) {
       return jsonOutput({ error: "Sai secret, kiểm tra lại GOOGLE_SCRIPT_SECRET." });
+    }
+
+    if (payload.action === "gallery_upload") {
+      return handleGalleryUpload(payload);
     }
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -96,6 +108,10 @@ function doGet(e) {
       return jsonOutput({ error: "Sai secret, kiểm tra lại GOOGLE_SCRIPT_SECRET." });
     }
 
+    if (params.action === "gallery") {
+      return handleGalleryList();
+    }
+
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = params.sheet_tab
       ? (ss.getSheetByName(params.sheet_tab) || ss.getActiveSheet())
@@ -128,6 +144,72 @@ function doGet(e) {
   }
 }
 
+// Nhận 1 ảnh/video từ trang Thư viện, lưu lên Drive (folder GALLERY_FOLDER_NAME) và ghi 1 dòng
+// metadata vào tab GALLERY_SHEET_TAB (tự tạo tab + dòng tiêu đề nếu chưa có).
+function handleGalleryUpload(payload) {
+  if (!payload.media_base64) {
+    return jsonOutput({ error: "Thiếu dữ liệu ảnh/video." });
+  }
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(GALLERY_SHEET_TAB) || ss.insertSheet(GALLERY_SHEET_TAB);
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(GALLERY_HEADER_ROW);
+  }
+
+  var mimeType = payload.media_mime_type || "image/jpeg";
+  var isVideo = mimeType.indexOf("video") === 0;
+
+  var viewUrl;
+  try {
+    viewUrl = saveGalleryFileToDrive(payload.media_base64, mimeType, payload.filename || "media", isVideo);
+  } catch (fileErr) {
+    return jsonOutput({ error: "Lỗi lưu ảnh/video lên Drive: " + String(fileErr) });
+  }
+
+  sheet.appendRow([
+    new Date(),
+    payload.uploader_name || "",
+    payload.caption || "",
+    isVideo ? "video" : "image",
+    viewUrl,
+  ]);
+
+  return jsonOutput({ status: "ok" });
+}
+
+// Trả về toàn bộ ảnh/video trong tab Gallery, mới nhất trước.
+function handleGalleryList() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(GALLERY_SHEET_TAB);
+  if (!sheet) {
+    return jsonOutput({ items: [] });
+  }
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return jsonOutput({ items: [] });
+  }
+
+  var values = sheet.getRange(2, 1, lastRow - 1, 5).getValues();
+  var items = values
+    .map(function (r) {
+      return {
+        timestamp: r[0] ? String(r[0]) : "",
+        uploader_name: r[1] || "",
+        caption: r[2] || "",
+        media_type: r[3] || "image",
+        media_url: r[4] || "",
+      };
+    })
+    .filter(function (item) {
+      return item.media_url;
+    })
+    .reverse();
+
+  return jsonOutput({ items: items });
+}
+
 // Cột "Thời gian hoàn thành" (chip time) đôi khi bị Google Sheets tự nhận diện là 1 giá trị
 // Time và lưu thành object Date (ngày epoch giả 1899-12-30) thay vì giữ nguyên chuỗi "HH:MM:SS".
 // Giá trị Date đó lưu đúng giờ đã nhập nhưng theo UTC+0 (vd nhập "03:29:27" thì Date lưu UTC
@@ -152,6 +234,22 @@ function saveImageToDrive(base64Data, mimeType, filename) {
   var file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   return "https://drive.google.com/open?id=" + file.getId();
+}
+
+// Lưu ảnh/video thư viện lên Drive, trả về link nhúng được thẳng vào trang web (khác với link
+// "open?id=" ở trên - link đó chỉ để mở trang xem của Drive, không nhúng trực tiếp được).
+// Ảnh dùng link "uc?export=view" để nhúng thẳng vào thẻ <img>; video dùng link "preview" để
+// nhúng vào <iframe> (Drive không cho phát video trực tiếp qua thẻ <video> thông thường).
+function saveGalleryFileToDrive(base64Data, mimeType, filename, isVideo) {
+  var folder = getOrCreateFolder(GALLERY_FOLDER_NAME);
+  var bytes = Utilities.base64Decode(base64Data);
+  var blob = Utilities.newBlob(bytes, mimeType, filename);
+  var file = folder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  var id = file.getId();
+  return isVideo
+    ? "https://drive.google.com/file/d/" + id + "/preview"
+    : "https://drive.google.com/uc?export=view&id=" + id;
 }
 
 function getOrCreateFolder(name) {

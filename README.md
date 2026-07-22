@@ -16,6 +16,9 @@ Google Sheet.
   Script này cũng là nơi trang chủ đọc dữ liệu về để dựng bảng vinh danh.
 - Tự động điền thời gian xuất (cột "Dấu thời gian") và tự động upload ảnh certificate gốc lên
   một folder Google Drive của bạn, điền link vào cột "Ảnh Runners".
+- **Thư viện ảnh/video CLB** (`/thu-vien`): thành viên tự tải ảnh/video luyện tập, thi đấu lên,
+  lưu vào Drive qua cùng Apps Script Web App - trang chủ hiển thị preview, trang thư viện hiển
+  thị toàn bộ + form tải lên.
 
 ## 1. Cài đặt
 
@@ -72,11 +75,12 @@ ghi dữ liệu, rồi lấy 1 đường link duy nhất.
 > vẫn giữ nguyên, không cần đổi lại trên app). Nếu code vừa thêm quyền mới (ví dụ mới thêm phần
 > lưu ảnh lên Drive), lần deploy tiếp theo có thể hỏi cấp quyền lại — cứ Authorize/Allow như bước 10.
 
-> ⚠️ **Nếu bạn đã deploy `Code.gs` từ trước** (trước khi có bảng vinh danh): bản `Code.gs` hiện
-> tại có thêm hàm `doGet` để trang chủ đọc dữ liệu về dựng bảng vinh danh. Bắt buộc phải dán lại
-> toàn bộ nội dung file mới vào Apps Script editor của bạn rồi **Deploy → Manage deployments →
-> ✏️ → New version → Deploy** thì trang chủ mới đọc được dữ liệu (link Web App không đổi). Nếu bỏ
-> qua bước này, trang chủ vẫn chạy bình thường nhưng bảng vinh danh sẽ luôn trống.
+> ⚠️ **Nếu bạn đã deploy `Code.gs` từ trước**: bản `Code.gs` hiện tại đã có thêm hàm `doGet` (đọc
+> dữ liệu dựng bảng vinh danh) và tính năng **Thư viện ảnh/video** (`action=gallery` /
+> `action=gallery_upload`). Bắt buộc phải dán lại toàn bộ nội dung file mới vào Apps Script
+> editor của bạn rồi **Deploy → Manage deployments → ✏️ → New version → Deploy** thì các tính
+> năng này mới hoạt động (link Web App không đổi). Nếu bỏ qua bước này, trang chủ/thư viện vẫn
+> chạy bình thường nhưng sẽ luôn trống dữ liệu.
 
 ### Ảnh certificate lưu ở đâu trên Drive?
 
@@ -85,6 +89,13 @@ Drive của tài khoản bạn dùng để deploy script, lưu từng ảnh cert
 "Anyone with the link", rồi điền link dạng `https://drive.google.com/open?id=...` vào cột
 "Ảnh Runners". Muốn đổi tên folder, sửa biến `DRIVE_FOLDER_NAME` trong `Code.gs` (nhớ Deploy
 lại — New version — sau khi sửa).
+
+### Ảnh/video Thư viện CLB lưu ở đâu?
+
+Tương tự, script tự tạo folder Drive riêng tên **"TKR Gallery"** (đổi bằng biến
+`GALLERY_FOLDER_NAME` trong `Code.gs`) và 1 tab Sheet riêng tên **"Gallery"** (đổi bằng
+`GALLERY_SHEET_TAB`) để lưu metadata (người đăng, chú thích, loại, link xem) — tách biệt hoàn
+toàn khỏi dữ liệu thành tích/bảng vinh danh, không ảnh hưởng tab chính.
 
 ## 4. Chạy ứng dụng (local)
 
@@ -121,6 +132,10 @@ Project đã có sẵn `vercel.json` + `api/index.py` để chạy dưới dạn
 > trên Vercel.
 > `vercel.json` đã đặt `maxDuration: 60` giây cho function (do bước upload ảnh lên Drive cần thêm
 > thời gian) — gói Hobby có thể giới hạn thấp hơn mức này tuỳ chính sách hiện tại của Vercel.
+> Giới hạn 4.5MB/request này ảnh hưởng rõ nhất tới **video** trong Thư viện CLB (video vài chục
+> giây thường đã vượt mốc này) — trên bản deploy Vercel, khuyên thành viên chỉ upload ảnh hoặc
+> video rất ngắn/nhẹ; nếu cần nhận video dài hơn, nên tự host (VD chạy `python app.py` trên máy
+> chủ riêng) thay vì Vercel Hobby.
 
 ## 6. Sử dụng
 
@@ -139,6 +154,9 @@ Project đã có sẵn `vercel.json` + `api/index.py` để chạy dưới dạn
    Ảnh Runners — bước này có thể mất vài giây tuỳ số lượng/kích thước ảnh.
 7. Quay lại trang chủ (hoặc tải lại trang) để thấy thành tích vừa nộp xuất hiện ngay trong bảng
    vinh danh đúng cự ly.
+8. Vào **Thư viện** (hoặc `/thu-vien`) để xem/tải ảnh, video của CLB: kéo-thả hoặc chọn 1 file
+   (ảnh hoặc video), điền tên + chú thích (tuỳ chọn), bấm **Tải lên** — file được lưu lên Drive và
+   xuất hiện ngay trong lưới bên dưới (mới nhất trước) cũng như preview trên trang chủ.
 
 ## Cách bảng vinh danh xếp hạng
 
@@ -158,16 +176,18 @@ Project đã có sẵn `vercel.json` + `api/index.py` để chạy dưới dạn
 ## Cấu trúc project
 
 ```
-app.py                    # Flask backend: trích xuất ảnh (Gemini), đọc/xếp bảng vinh danh, gọi Apps Script để ghi Sheet
+app.py                    # Flask backend: trích xuất ảnh (Gemini), đọc/xếp bảng vinh danh, thư viện ảnh/video, gọi Apps Script
 api/index.py               # Entry point cho Vercel Serverless Function (re-export app từ app.py)
 vercel.json                 # Cấu hình routing cho Vercel
-google-apps-script/Code.gs  # Script dán vào Google Sheet: ghi dữ liệu (doPost) + đọc dữ liệu (doGet) (xem mục 3)
-templates/home.html         # Trang chủ CLB: hero, Core Team, bảng vinh danh, giới thiệu
+google-apps-script/Code.gs  # Script dán vào Google Sheet: ghi/đọc thành tích (doPost/doGet) + thư viện ảnh/video (xem mục 3)
+templates/home.html         # Trang chủ CLB: hero, Core Team, bảng vinh danh, giới thiệu, đồng phục, preview thư viện
 templates/index.html        # Công cụ trích xuất (route /trich-xuat)
+templates/gallery.html      # Thư viện ảnh/video, form tải lên (route /thu-vien)
 static/home.css / home.js   # Style + hiệu ứng dải cờ (bunting) cho trang chủ
+static/gallery.css / gallery.js  # Style + logic tải lên cho trang Thư viện
 static/style.css
 static/script.js
-static/images/             # Đặt file logo/ảnh bìa (cover.jpg) và logo nav (nav-mark.png) vào đây
+static/images/             # Đặt file logo/ảnh bìa (cover.jpg), logo nav (nav-mark.png), ảnh đồng phục (outfit.webp) vào đây
 .env                        # Biến môi trường khi chạy local (gitignored)
 ```
 

@@ -19,6 +19,7 @@
       <li><a href="#vinh-danh">Bảng vinh danh</a></li>
       <li><a href="#gioi-thieu">Giới thiệu</a></li>
       <li><a href="#dong-phuc">Đồng phục</a></li>
+      <li><a href="#thu-vien">Thư viện</a></li>
       <li><a href="{{ url_for('index') }}" target="_blank" rel="noopener">Nộp thành tích</a></li>
     </ul>
     <a class="nav-cta" href="{{ url_for('index') }}" target="_blank" rel="noopener">Nộp thành tích →</a>
@@ -184,22 +185,29 @@
     </div>
   </section>
 
-  <section class="page" id="nop-thanh-tich">
-    <div class="tool-cta">
-      <div class="tool-copy">
-        <p class="eyebrow">Công cụ trích xuất</p>
-        <h2 class="display">Vừa về đích? Nộp chứng nhận ngay</h2>
-        <p>Kéo-thả ảnh finisher certificate — hệ thống tự đọc họ tên, cự ly, thành tích, tên giải, bạn chỉ cần xác nhận là xong. Kết quả sẽ tự động xếp vào đúng bảng vinh danh theo cự ly.</p>
-        <a class="btn" href="{{ url_for('index') }}" target="_blank" rel="noopener">Mở công cụ trích xuất →</a>
+  <section class="page" id="thu-vien">
+    <div class="section-head">
+      <p class="eyebrow">Thư viện ảnh &amp; video</p>
+      <h2 class="display">Khoảnh khắc của CLB</h2>
+      <p>Ảnh và video luyện tập, thi đấu do chính các thành viên đóng góp — xem và tải lên ngay.</p>
+    </div>
+    {% if gallery_preview %}
+    <div class="gallery-preview-grid">
+      {% for item in gallery_preview %}
+      <div class="gallery-preview-item">
+        {% if item.media_type == 'video' %}
+        <iframe src="{{ item.media_url }}" loading="lazy" allow="autoplay"></iframe>
+        {% else %}
+        <img src="{{ item.media_url }}" alt="{{ item.caption or 'Ảnh CLB Thanh Khê Runners' }}" loading="lazy" />
+        {% endif %}
       </div>
-      <div class="tool-preview">
-        <div class="mock-drop">
-          <strong>📤 Kéo-thả ảnh certificate vào đây</strong>
-          Hỗ trợ PNG / JPEG / WEBP / GIF
-        </div>
-        <div class="mock-row"><span class="dot"></span> Đã đọc: họ tên — cự ly — thành tích</div>
-        <div class="mock-row"><span class="dot"></span> Xác nhận là tự động lên bảng vinh danh</div>
-      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="gallery-preview-empty">Chưa có ảnh/video nào được chia sẻ. Hãy là người đầu tiên đóng góp!</div>
+    {% endif %}
+    <div class="gallery-preview-cta">
+      <a class="btn btn-solid-alt" href="{{ url_for('gallery') }}" target="_blank" rel="noopener">Xem & tải ảnh/video lên →</a>
     </div>
   </section>
 
@@ -211,6 +219,7 @@
       <a href="#vinh-danh">Bảng vinh danh</a>
       <a href="#gioi-thieu">Giới thiệu</a>
       <a href="#dong-phuc">Đồng phục</a>
+      <a href="#thu-vien">Thư viện</a>
       <a href="{{ url_for('index') }}" target="_blank" rel="noopener">Nộp thành tích</a>
     </div>
     <div class="foot-social">

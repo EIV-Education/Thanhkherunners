@@ -1,0 +1,91 @@
+.pending-file {
+  margin-top: 1rem;
+  display: inline-flex;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.upload-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.upload-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  color: var(--muted);
+  gap: 0.25rem;
+}
+
+.upload-form input {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.9rem;
+  min-width: 220px;
+}
+
+.upload-form-wide {
+  flex: 1 1 320px;
+}
+
+.upload-form-wide input {
+  width: 100%;
+  min-width: 260px;
+}
+
+.gallery-section {
+  margin-top: 2.5rem;
+}
+
+.gallery-section h2 {
+  font-size: 1.2rem;
+  margin-bottom: 0.9rem;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.gallery-item {
+  margin: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.gallery-item img,
+.gallery-item iframe {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border: none;
+}
+
+.gallery-item figcaption {
+  padding: 0.5rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.gallery-caption {
+  display: block;
+  color: var(--text);
+  margin-bottom: 0.15rem;
+}
+
+.gallery-uploader {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}

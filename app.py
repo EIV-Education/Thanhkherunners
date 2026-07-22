@@ -22,6 +22,17 @@ GOOGLE_SHEET_TAB = os.environ.get("GOOGLE_SHEET_TAB", "")
 MAX_IMAGE_BYTES = 20 * 1024 * 1024  # 20MB/ảnh
 ALLOWED_MIME_TYPES = {"image/png", "image/jpeg", "image/webp", "image/gif"}
 
+MAX_GALLERY_BYTES = 20 * 1024 * 1024  # 20MB/file - giới hạn body request của Vercel còn thấp hơn
+ALLOWED_GALLERY_MIME_TYPES = {
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/gif",
+    "video/mp4",
+    "video/quicktime",
+    "video/webm",
+}
+
 _gemini_client = None
 
 
@@ -180,6 +191,25 @@ def fetch_sheet_rows() -> list:
     return data.get("rows", []) or []
 
 
+def fetch_gallery_items() -> list:
+    """Đọc danh sách ảnh/video Thư viện CLB từ Apps Script (doGet?action=gallery). Trả về []
+    nếu chưa cấu hình GOOGLE_SCRIPT_URL hoặc gọi lỗi - không làm crash trang."""
+    if not GOOGLE_SCRIPT_URL:
+        return []
+    params = {"action": "gallery"}
+    if GOOGLE_SCRIPT_SECRET:
+        params["secret"] = GOOGLE_SCRIPT_SECRET
+    try:
+        resp = requests.get(GOOGLE_SCRIPT_URL, params=params, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+    except (requests.exceptions.RequestException, ValueError):
+        return []
+    if not isinstance(data, dict) or data.get("error"):
+        return []
+    return data.get("items", []) or []
+
+
 def build_leaderboard(rows: list) -> list:
     """Gộp các dòng thành tích theo cự ly; nếu cùng 1 runner (trùng họ tên, không phân biệt
     hoa/thường) nộp nhiều lần trong cùng cự ly thì chỉ giữ lại thành tích nhanh nhất, rồi xếp
@@ -243,11 +273,14 @@ def home():
         ),
     }
 
+    gallery_preview = fetch_gallery_items()[:6]
+
     return render_template(
         "home.html",
         leaderboard=leaderboard,
         core_team=CORE_TEAM,
         stats=stats,
+        gallery_preview=gallery_preview,
     )
 
 
@@ -258,6 +291,11 @@ def index():
         default_script_url=GOOGLE_SCRIPT_URL,
         default_sheet_tab=GOOGLE_SHEET_TAB,
     )
+
+
+@app.route("/thu-vien")
+def gallery():
+    return render_template("gallery.html", items=fetch_gallery_items())
 
 
 @app.route("/api/extract", methods=["POST"])
@@ -364,6 +402,64 @@ def api_export():
         return jsonify({"error": result["error"]}), 500
 
     return jsonify({"status": "ok", "rows_written": len(clean_rows)})
+
+
+@app.route("/api/gallery/upload", methods=["POST"])
+def api_gallery_upload():
+    payload = request.get_json(force=True) or {}
+    script_url = GOOGLE_SCRIPT_URL.strip()
+
+    if not script_url:
+        return jsonify({"error": "Thiếu cấu hình Google Apps Script Web App (GOOGLE_SCRIPT_URL)."}), 400
+
+    media_base64 = payload.get("media_base64")
+    if not media_base64:
+        return jsonify({"error": "Thiếu ảnh/video."}), 400
+
+    media_mime_type = payload.get("media_mime_type", "")
+    if media_mime_type not in ALLOWED_GALLERY_MIME_TYPES:
+        return jsonify({"error": "Định dạng không hỗ trợ (chỉ nhận PNG/JPEG/WEBP/GIF hoặc MP4/MOV/WEBM)."}), 400
+
+    # base64 nặng hơn file gốc ~33% - ước lượng ngược lại kích thước gốc để kiểm tra giới hạn.
+    estimated_bytes = len(media_base64) * 3 / 4
+    if estimated_bytes > MAX_GALLERY_BYTES:
+        return jsonify({"error": "File vượt quá 20MB."}), 400
+
+    body = {
+        "action": "gallery_upload",
+        "uploader_name": (payload.get("uploader_name") or "").strip(),
+        "caption": (payload.get("caption") or "").strip(),
+        "media_base64": media_base64,
+        "media_mime_type": media_mime_type,
+        "filename": payload.get("filename", "media"),
+    }
+    if GOOGLE_SCRIPT_SECRET:
+        body["secret"] = GOOGLE_SCRIPT_SECRET
+
+    try:
+        # Timeout dài vì video có thể mất thời gian tải lên Drive.
+        resp = requests.post(script_url, json=body, timeout=120)
+        resp.raise_for_status()
+        result = resp.json()
+    except requests.exceptions.RequestException as exc:
+        return jsonify({"error": f"Không gọi được Google Apps Script: {exc}"}), 500
+    except ValueError:
+        return (
+            jsonify(
+                {
+                    "error": (
+                        "Google Apps Script trả về dữ liệu không hợp lệ (không phải JSON). "
+                        "Kiểm tra lại đã Deploy đúng loại 'Web app' và link còn hoạt động chưa."
+                    )
+                }
+            ),
+            500,
+        )
+
+    if isinstance(result, dict) and result.get("error"):
+        return jsonify({"error": result["error"]}), 500
+
+    return jsonify({"status": "ok"})
 
 
 if __name__ == "__main__":
