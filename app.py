@@ -95,7 +95,7 @@ CORE_TEAM = [
     {"name": "Đàm Tường Quang", "initials": "ĐQ", "gradient": ("var(--flag-gold)", "var(--orange)"), "photo": "core-team/dam-tuong-quang.jpg"},
     {"name": "Huỳnh Trung Phúc", "initials": "HP", "gradient": ("var(--orange)", "var(--flag-gold)"), "photo": "core-team/huynh-trung-phuc.jpg"},
     {"name": "Cao Văn Tâm", "initials": "CT", "gradient": ("var(--teal-bright)", "var(--orange)"), "photo": "core-team/cao-van-tam.jpg"},
-    {"name": "Nguyễn Dương Hiếu", "initials": "NH", "gradient": ("var(--flag-gold)", "var(--teal-bright)"), "photo": None},
+    {"name": "Nguyễn Dương Hiếu", "initials": "NH", "gradient": ("var(--flag-gold)", "var(--teal-bright)"), "photo": "core-team/nguyen-duong-hieu.jpg"},
     {"name": "Đỗ Hoàng Nhật", "initials": "ĐN", "gradient": ("var(--orange)", "var(--teal-bright)"), "photo": "core-team/do-hoang-nhat.jpg"},
     {"name": "Lê Công Sanh", "initials": "LS", "gradient": ("var(--teal-bright)", "var(--flag-gold)"), "photo": "core-team/le-cong-sanh.jpg"},
     {"name": "Hoàng Nguyễn Lê Sinh", "initials": "HS", "gradient": ("var(--flag-gold)", "var(--orange)"), "photo": "core-team/hoang-nguyen-le-sinh.jpg"},
