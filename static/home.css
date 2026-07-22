@@ -116,9 +116,9 @@ a { color: inherit; }
 }
 
 .nav-mark {
-  height: 40px;
-  width: auto;
-  border-radius: 6px;
+  height: 54px;
+  width: 54px;
+  border-radius: 10px;
   object-fit: contain;
   flex-shrink: 0;
 }
