@@ -627,6 +627,23 @@ td.time { font-weight: 700; color: var(--teal); }
   color: rgba(255, 255, 255, 0.35);
 }
 
+/* ---------- Outfit (đồng phục CLB) ---------- */
+.outfit-frame {
+  max-width: 960px;
+  margin: 0 auto;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.outfit-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 /* ---------- Tool CTA ---------- */
 .tool-cta {
   display: grid;
