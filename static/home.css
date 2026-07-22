@@ -721,6 +721,23 @@ footer.site .foot-links {
 footer.site .foot-links a { text-decoration: none; }
 footer.site .foot-links a:hover { color: var(--teal); }
 
+footer.site .foot-social {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+footer.site .foot-social a {
+  text-decoration: none;
+  color: var(--teal);
+}
+
+footer.site .foot-social a:hover { color: var(--orange); }
+
 footer.site .credit {
   margin-top: 1.1rem;
   font-size: 1rem;
