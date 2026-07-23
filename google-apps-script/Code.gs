@@ -238,8 +238,10 @@ function saveImageToDrive(base64Data, mimeType, filename) {
 
 // Lưu ảnh/video thư viện lên Drive, trả về link nhúng được thẳng vào trang web (khác với link
 // "open?id=" ở trên - link đó chỉ để mở trang xem của Drive, không nhúng trực tiếp được).
-// Ảnh dùng link "uc?export=view" để nhúng thẳng vào thẻ <img>; video dùng link "preview" để
-// nhúng vào <iframe> (Drive không cho phát video trực tiếp qua thẻ <video> thông thường).
+// Ảnh dùng endpoint "thumbnail" chính thức của Drive để nhúng vào thẻ <img> - link kiểu
+// "uc?export=view" ngày càng hay bị Google chặn/không hiển thị được (403, ảnh vỡ) nên không
+// dùng nữa. Video dùng link "preview" để nhúng vào <iframe> (Drive không cho phát trực tiếp
+// qua thẻ <video> thông thường).
 function saveGalleryFileToDrive(base64Data, mimeType, filename, isVideo) {
   var folder = getOrCreateFolder(GALLERY_FOLDER_NAME);
   var bytes = Utilities.base64Decode(base64Data);
@@ -249,7 +251,7 @@ function saveGalleryFileToDrive(base64Data, mimeType, filename, isVideo) {
   var id = file.getId();
   return isVideo
     ? "https://drive.google.com/file/d/" + id + "/preview"
-    : "https://drive.google.com/uc?export=view&id=" + id;
+    : "https://drive.google.com/thumbnail?id=" + id + "&sz=w1600";
 }
 
 function getOrCreateFolder(name) {

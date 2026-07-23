@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
@@ -191,6 +192,21 @@ def fetch_sheet_rows() -> list:
     return data.get("rows", []) or []
 
 
+_DRIVE_UC_VIEW_RE = re.compile(r"^https://drive\.google\.com/uc\?export=view&id=(.+)$")
+
+
+def fix_gallery_media_url(item: dict) -> dict:
+    """Ảnh tải lên trước khi đổi sang endpoint thumbnail vẫn còn lưu link kiểu
+    "uc?export=view&id=..." trên Sheet - link này ngày càng hay bị Google chặn/không hiển thị
+    được. Tự sửa lại thành link "thumbnail" ngay khi đọc, không cần tải lại ảnh hay sửa dữ liệu
+    trên Sheet."""
+    if item.get("media_type") != "video":
+        match = _DRIVE_UC_VIEW_RE.match(item.get("media_url") or "")
+        if match:
+            item["media_url"] = f"https://drive.google.com/thumbnail?id={match.group(1)}&sz=w1600"
+    return item
+
+
 def fetch_gallery_items() -> list:
     """Đọc danh sách ảnh/video Thư viện CLB từ Apps Script (doGet?action=gallery). Trả về []
     nếu chưa cấu hình GOOGLE_SCRIPT_URL hoặc gọi lỗi - không làm crash trang."""
@@ -207,7 +223,16 @@ def fetch_gallery_items() -> list:
         return []
     if not isinstance(data, dict) or data.get("error"):
         return []
-    return data.get("items", []) or []
+    items = data.get("items", []) or []
+    return [fix_gallery_media_url(item) for item in items]
+
+
+def normalize_name(text: str) -> str:
+    """Chuẩn hoá họ tên để so khớp trùng lặp: chữ Việt có dấu có thể được lưu ở 2 dạng Unicode
+    khác nhau (NFC dựng sẵn vs NFD tổ hợp dấu rời) tuỳ nguồn nhập liệu - nhìn giống hệt nhau
+    nhưng so sánh chuỗi trực tiếp (kể cả sau .lower()) sẽ ra khác nhau. unicodedata.normalize
+    đưa cả 2 dạng về cùng 1 chuẩn (NFC) trước khi so khớp."""
+    return unicodedata.normalize("NFC", (text or "").strip()).lower()
 
 
 def build_leaderboard(rows: list) -> list:
@@ -236,7 +261,7 @@ def build_leaderboard(rows: list) -> list:
     for group in groups.values():
         best_by_name = {}
         for entry in group["entries"]:
-            name_key = (entry["full_name"] or "").strip().lower()
+            name_key = normalize_name(entry["full_name"])
             current = best_by_name.get(name_key)
             if current is None:
                 best_by_name[name_key] = entry
@@ -265,7 +290,7 @@ def home():
 
     full_marathon = next((g for g in leaderboard if g["key"] == "full_marathon"), None)
     stats = {
-        "runners": len({(r.get("full_name") or "").strip() for r in rows if r.get("full_name")}),
+        "runners": len({normalize_name(r.get("full_name")) for r in rows if r.get("full_name")}),
         "submissions": len(rows),
         "races": len({(r.get("race_name") or "").strip() for r in rows if r.get("race_name")}),
         "best_full_marathon": (
