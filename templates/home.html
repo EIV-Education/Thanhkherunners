@@ -27,13 +27,18 @@
   <div class="flag-stripe"></div>
 
   <header class="hero" id="top">
-    <div class="hero-inner">
-      <h1 class="display">Chạy là đam mê<br /><em>đồng đội là sức mạnh</em></h1>
-      <p class="lede">Nơi lưu lại từng cột mốc của các thành viên Thanh Khê Runners — nộp chứng nhận hoàn thành, hệ thống tự đọc kết quả và xếp bạn vào đúng bảng vinh danh theo cự ly.</p>
-      <div class="hero-actions">
-        <a class="btn btn-solid" href="{{ url_for('index') }}" target="_blank" rel="noopener">Nộp thành tích mới</a>
-        <a class="btn btn-outline" href="#vinh-danh">Xem bảng vinh danh</a>
+    <div class="hero-inner hero-inner-split">
+      <div class="hero-copy">
+        <h1 class="display">Chạy là đam mê<br /><em>đồng đội là sức mạnh</em></h1>
+        <p class="lede">Nơi lưu lại từng cột mốc của các thành viên Thanh Khê Runners — nộp chứng nhận hoàn thành, hệ thống tự đọc kết quả và xếp bạn vào đúng bảng vinh danh theo cự ly.</p>
+        <div class="hero-actions">
+          <a class="btn btn-solid" href="{{ url_for('index') }}" target="_blank" rel="noopener">Nộp thành tích mới</a>
+          <a class="btn btn-outline" href="#vinh-danh">Xem bảng vinh danh</a>
+        </div>
       </div>
+      <a class="hero-jersey" href="#dong-phuc">
+        <img src="{{ url_for('static', filename='images/outfit-hero.webp') }}" alt="Đồng phục thi đấu CLB Thanh Khê Runners" />
+      </a>
     </div>
     <div class="hero-stats">
       <div class="hero-stat"><div class="num mono">{{ stats.runners }}</div><div class="label">Runner đã ghi danh</div></div>
