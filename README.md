@@ -180,14 +180,14 @@ app.py                    # Flask backend: trích xuất ảnh (Gemini), đọc/
 api/index.py               # Entry point cho Vercel Serverless Function (re-export app từ app.py)
 vercel.json                 # Cấu hình routing cho Vercel
 google-apps-script/Code.gs  # Script dán vào Google Sheet: ghi/đọc thành tích (doPost/doGet) + thư viện ảnh/video (xem mục 3)
-templates/home.html         # Trang chủ CLB: hero, Core Team, bảng vinh danh, giới thiệu, đồng phục, preview thư viện
+templates/home.html         # Trang chủ CLB: hero (kèm ảnh đồng phục), Core Team, bảng vinh danh, giới thiệu, preview thư viện
 templates/index.html        # Công cụ trích xuất (route /trich-xuat)
 templates/gallery.html      # Thư viện ảnh/video, form tải lên (route /thu-vien)
 static/home.css / home.js   # Style + hiệu ứng dải cờ (bunting) cho trang chủ
 static/gallery.css / gallery.js  # Style + logic tải lên cho trang Thư viện
 static/style.css
 static/script.js
-static/images/             # Đặt file logo/ảnh bìa (cover.jpg), logo nav (nav-mark.png), ảnh đồng phục (outfit.webp) vào đây
+static/images/             # Đặt file logo/ảnh bìa (cover.jpg), logo nav (nav-mark.png), ảnh đồng phục hero (outfit-hero.webp) vào đây
 .env                        # Biến môi trường khi chạy local (gitignored)
 ```
 

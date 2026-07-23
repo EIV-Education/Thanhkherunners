@@ -215,9 +215,8 @@ a { color: inherit; }
 
 .hero-jersey {
   flex: 0 0 auto;
-  display: block;
-  width: 240px;
-  border-radius: 20px;
+  width: 168px;
+  border-radius: 16px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: var(--shadow);
@@ -230,9 +229,21 @@ a { color: inherit; }
   height: auto;
 }
 
+.hero-jersey-label {
+  display: block;
+  text-align: center;
+  padding: 0.4rem 0.4rem 0.55rem;
+  font-family: "Arial Black", sans-serif;
+  font-weight: 900;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+
 @media (max-width: 820px) {
   .hero-inner-split { flex-direction: column; }
-  .hero-jersey { width: 200px; }
+  .hero-jersey { width: 180px; }
 }
 
 .hero .eyebrow,
@@ -659,23 +670,6 @@ td.time { font-weight: 700; color: var(--teal); }
   content: "·";
   margin-left: 1.6rem;
   color: rgba(255, 255, 255, 0.35);
-}
-
-/* ---------- Outfit (đồng phục CLB) ---------- */
-.outfit-frame {
-  max-width: 960px;
-  margin: 0 auto;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.outfit-frame img {
-  display: block;
-  width: 100%;
-  height: auto;
 }
 
 /* ---------- Gallery preview (thư viện ảnh/video) ---------- */

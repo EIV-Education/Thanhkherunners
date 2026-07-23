@@ -18,7 +18,6 @@
       <li><a href="#core-team">Core Team</a></li>
       <li><a href="#vinh-danh">Bảng vinh danh</a></li>
       <li><a href="#gioi-thieu">Giới thiệu</a></li>
-      <li><a href="#dong-phuc">Đồng phục</a></li>
       <li><a href="#thu-vien">Thư viện</a></li>
       <li><a href="{{ url_for('index') }}" target="_blank" rel="noopener">Nộp thành tích</a></li>
     </ul>
@@ -36,9 +35,10 @@
           <a class="btn btn-outline" href="#vinh-danh">Xem bảng vinh danh</a>
         </div>
       </div>
-      <a class="hero-jersey" href="#dong-phuc">
+      <div class="hero-jersey">
         <img src="{{ url_for('static', filename='images/outfit-hero.webp') }}" alt="Đồng phục thi đấu CLB Thanh Khê Runners" />
-      </a>
+        <span class="hero-jersey-label">Outfit CLB</span>
+      </div>
     </div>
     <div class="hero-stats">
       <div class="hero-stat"><div class="num mono">{{ stats.runners }}</div><div class="label">Runner đã ghi danh</div></div>
@@ -179,17 +179,6 @@
     </div>
   </section>
 
-  <section class="page outfit" id="dong-phuc">
-    <div class="section-head">
-      <p class="eyebrow">Đồng phục CLB</p>
-      <h2 class="display">Áo Thi Đấu Thanh Khê Runners</h2>
-      <p>Thiết kế theo đúng tông màu cờ CLB — mặc lên là nhận ra nhau ngay giữa mọi giải chạy.</p>
-    </div>
-    <div class="outfit-frame">
-      <img src="{{ url_for('static', filename='images/outfit.webp') }}" alt="Đồng phục thi đấu CLB Thanh Khê Runners - mặt trước và mặt sau" />
-    </div>
-  </section>
-
   <section class="page" id="thu-vien">
     <div class="section-head">
       <p class="eyebrow">Thư viện ảnh &amp; video</p>
@@ -223,7 +212,6 @@
       <a href="#lich-tap">Lịch tập</a>
       <a href="#vinh-danh">Bảng vinh danh</a>
       <a href="#gioi-thieu">Giới thiệu</a>
-      <a href="#dong-phuc">Đồng phục</a>
       <a href="#thu-vien">Thư viện</a>
       <a href="{{ url_for('index') }}" target="_blank" rel="noopener">Nộp thành tích</a>
     </div>
