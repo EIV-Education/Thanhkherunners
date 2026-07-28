@@ -82,6 +82,16 @@ ghi dữ liệu, rồi lấy 1 đường link duy nhất.
 > năng này mới hoạt động (link Web App không đổi). Nếu bỏ qua bước này, trang chủ/thư viện vẫn
 > chạy bình thường nhưng sẽ luôn trống dữ liệu.
 
+> ⚠️ **Đã sửa lỗi "bảng vinh danh tự nhiên trống dù Sheet vẫn còn dữ liệu"**: script cũ dùng
+> `getActiveSheet()` để tự chọn tab khi không chỉ định `sheet_tab` - hàm này thực chất trả về
+> **tab bất kỳ ai đó vừa bấm vào xem gần nhất trên giao diện Google Sheets**, không liên quan gì
+> đến app. Từ khi có thêm tab "Gallery", chỉ cần ai mở Sheet lên xem tab Gallery là mọi request
+> sau đó (kể cả lúc có người nộp thành tích mới!) bị lệch sang tab Gallery. Dữ liệu cũ **không hề
+> mất** - vẫn còn nguyên trên tab gốc, chỉ là bị đọc/ghi nhầm tab. Bản `Code.gs` mới luôn tự chọn
+> tab đầu tiên không phải "Gallery" làm mặc định, không phụ thuộc ai đang xem tab nào nữa. Sau khi
+> dán lại và Deploy bản mới, nên mở Sheet kiểm tra tab "Gallery" xem có lỡ lọt vài dòng thành tích
+> nộp nhầm trong lúc bị lỗi không, cắt dán thủ công về đúng tab nếu có.
+
 ### Ảnh certificate lưu ở đâu trên Drive?
 
 Script tự tạo (hoặc dùng lại nếu đã có) 1 folder tên **"Finisher Certificates"** trong Google

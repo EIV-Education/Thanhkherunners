@@ -66,7 +66,7 @@ function doPost(e) {
     }
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getActiveSheet();
+    var sheet = getDefaultDataSheet(ss);
     if (payload.sheet_tab) {
       sheet = ss.getSheetByName(payload.sheet_tab) || ss.insertSheet(payload.sheet_tab);
     }
@@ -114,8 +114,8 @@ function doGet(e) {
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = params.sheet_tab
-      ? (ss.getSheetByName(params.sheet_tab) || ss.getActiveSheet())
-      : ss.getActiveSheet();
+      ? (ss.getSheetByName(params.sheet_tab) || getDefaultDataSheet(ss))
+      : getDefaultDataSheet(ss);
 
     var lastRow = sheet.getLastRow();
     if (lastRow < 2) {
@@ -252,6 +252,23 @@ function saveGalleryFileToDrive(base64Data, mimeType, filename, isVideo) {
   return isVideo
     ? "https://drive.google.com/file/d/" + id + "/preview"
     : "https://drive.google.com/thumbnail?id=" + id + "&sz=w1600";
+}
+
+// Khi không chỉ định sheet_tab, trước đây script dùng ss.getActiveSheet() - nhưng hàm đó trả về
+// bất kỳ tab nào 1 người vừa bấm vào xem trên giao diện Google Sheets (không liên quan gì tới
+// app), CHỨ KHÔNG PHẢI tab chứa dữ liệu thành tích. Từ khi có thêm tab "Gallery", chỉ cần ai đó
+// mở Sheet lên xem tab Gallery là mọi request tiếp theo (kể cả lúc app ghi thành tích mới!) sẽ bị
+// lệch sang tab Gallery, làm bảng vinh danh hiện trống dù dữ liệu vẫn còn nguyên trên tab cũ. Hàm
+// này thay thế bằng cách luôn lấy tab ĐẦU TIÊN không phải tab Gallery - cố định, không phụ thuộc
+// ai đang xem tab nào.
+function getDefaultDataSheet(ss) {
+  var sheets = ss.getSheets();
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].getName() !== GALLERY_SHEET_TAB) {
+      return sheets[i];
+    }
+  }
+  return sheets[0];
 }
 
 function getOrCreateFolder(name) {
