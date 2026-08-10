@@ -98,6 +98,14 @@ def _friendly_gemini_error(exc: Exception) -> str:
             "'gemini-pro-latest') - xem danh sách model hiện có tại "
             f"https://ai.google.dev/gemini-api/docs/models. Chi tiết lỗi gốc: {text}"
         )
+    if "UNAUTHENTICATED" in text or "ACCOUNT_STATE_INVALID" in text or "401" in text:
+        return (
+            "API key Gemini đang dùng bị vô hiệu hoá phía Google (tài khoản/dự án gắn với key "
+            "đã bị xoá hoặc tắt) - không phải lỗi của app. Vào "
+            "https://aistudio.google.com/apikey tạo API key MỚI, rồi cập nhật biến môi trường "
+            "GEMINI_API_KEY (trên Vercel: Project Settings → Environment Variables → sửa giá "
+            f"trị → Redeploy). Chi tiết lỗi gốc: {text}"
+        )
     return text
 
 
