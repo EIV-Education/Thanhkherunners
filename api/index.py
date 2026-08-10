@@ -85,8 +85,3 @@ class handler(BaseHTTPRequestHandler):
 
     def do_HEAD(self):
         self._run_wsgi()
-
-
-# Vẫn giữ biến `app` để tương thích ngược nếu cần (không dùng khi Vercel nhận diện class
-# `handler` ở trên).
-app = flask_app
