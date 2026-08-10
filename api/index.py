@@ -3,18 +3,19 @@
 File này re-export app Flask định nghĩa ở app.py (đặt tại thư mục gốc project) để Flask
 vẫn resolve đúng thư mục templates/ và static/ ở gốc project.
 
-Vercel's Python WSGI auto-detection (nhận diện biến `app`) đôi khi không forward đúng path
-gốc của request tới hàm WSGI - dẫn tới mọi request (dù gõ "/" hay "/thu-vien") đều bị xử lý
-như thể path luôn là "/api/index", làm toàn bộ trang báo "404 Not Found". Để tránh phụ thuộc
-vào việc Vercel tự dựng WSGI environ, file này tự bắc cầu bằng interface Python gốc của Vercel
-(class `handler` kế thừa BaseHTTPRequestHandler, dùng `self.path` - luôn đúng path thật của
-request) rồi tự dựng WSGI environ chuẩn để gọi thẳng vào app Flask.
+Vercel rewrite "/(.*)" → "/api/index" chỉ đưa request tới ĐÚNG FILE này, nhưng bản thân
+request mà hàm Python nhận được (dù đọc qua biến WSGI `app` hay qua self.path của
+BaseHTTPRequestHandler) lại luôn là path đích "/api/index", KHÔNG PHẢI path gốc người dùng
+gõ (vd "/", "/thu-vien") - route rewrite không tự "mang" path gốc theo, phải tự truyền tay.
+Vì vậy destination trong vercel.json được viết thành "/api/index?vercelPath=$1", dùng cú
+pháp capture group ($1) của Vercel để nhét path gốc vào query string - rồi file này tự đọc
+lại query "vercelPath" đó để dựng đúng PATH_INFO thật trước khi gọi vào Flask.
 """
 
 import sys
 from io import BytesIO
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlencode, urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -26,14 +27,24 @@ from http.server import BaseHTTPRequestHandler  # noqa: E402
 class handler(BaseHTTPRequestHandler):
     def _run_wsgi(self):
         parsed = urlsplit(self.path)
+        query_pairs = parse_qsl(parsed.query, keep_blank_values=True)
+
+        real_path = parsed.path
+        remaining_query = []
+        for key, value in query_pairs:
+            if key == "vercelPath":
+                real_path = "/" + value
+            else:
+                remaining_query.append((key, value))
+
         content_length = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(content_length) if content_length else b""
 
         environ = {
             "REQUEST_METHOD": self.command,
             "SCRIPT_NAME": "",
-            "PATH_INFO": parsed.path,
-            "QUERY_STRING": parsed.query,
+            "PATH_INFO": real_path,
+            "QUERY_STRING": urlencode(remaining_query),
             "CONTENT_TYPE": self.headers.get("Content-Type", ""),
             "CONTENT_LENGTH": str(len(body)),
             "SERVER_NAME": self.headers.get("Host", "localhost").split(":")[0],

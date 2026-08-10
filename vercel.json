@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api/index" }
+    { "source": "/(.*)", "destination": "/api/index?vercelPath=$1" }
   ],
   "functions": {
     "api/index.py": { "maxDuration": 60 }
