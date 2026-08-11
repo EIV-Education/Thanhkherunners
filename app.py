@@ -125,22 +125,28 @@ CORE_TEAM = [
 
 def normalize_distance(raw: str):
     """Gộp chuỗi cự ly thô (do người dùng nhập hoặc Gemini đọc được) về 1 nhóm cự ly
-    chuẩn để xếp bảng vinh danh. Trả về (key, label, km) hoặc None nếu bỏ trống."""
+    chuẩn để xếp bảng vinh danh. Trả về (key, label, km) hoặc None nếu bỏ trống.
+
+    Trích số km thật ra trước rồi mới so khoảng giá trị - KHÔNG dò chuỗi con kiểu
+    "10" in text, vì "10" cũng khớp nhầm vào "100" (vd cự ly trail "TRAIL 100+" bị
+    nhận nhầm thành 10K)."""
     text = (raw or "").strip()
     if not text:
         return None
     low = text.lower()
-    if "full" in low or "42" in low:
-        return ("full_marathon", "Full Marathon", 42.195)
-    if "half" in low or "21" in low:
-        return ("half_marathon", "Half Marathon", 21.1)
-    if "10" in low:
-        return ("10k", "10K", 10.0)
-    if "5" in low:
-        return ("5k", "5K", 5.0)
+
     match = re.search(r"(\d+(?:[.,]\d+)?)", low)
-    if match:
-        km = float(match.group(1).replace(",", "."))
+    km = float(match.group(1).replace(",", ".")) if match else None
+
+    if "full" in low or (km is not None and 40 <= km <= 44):
+        return ("full_marathon", "Full Marathon", 42.195)
+    if "half" in low or (km is not None and 20 <= km <= 22):
+        return ("half_marathon", "Half Marathon", 21.1)
+    if km is not None and 9.5 <= km <= 10.5:
+        return ("10k", "10K", 10.0)
+    if km is not None and 4.5 <= km <= 5.5:
+        return ("5k", "5K", 5.0)
+    if km is not None:
         return (f"other_{km}", text, km)
     return (f"other_{low}", text, 0.0)
 
